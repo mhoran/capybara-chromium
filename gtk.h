@@ -11,24 +11,24 @@
 #include <string.h>
 
 void app_terminate_signal(int signatl) {
-    printf("app_terminate_signal\n");
+    fprintf(stderr, "app_terminate_signal\n");
     cef_quit_message_loop();
 }
 
 void initialize_gtk() {
-    printf("initialize_gtk\n");
+    fprintf(stderr, "initialize_gtk\n");
     gtk_init(0, NULL);
     signal(SIGINT, app_terminate_signal);
     signal(SIGTERM, app_terminate_signal);
 }
 
 void window_destroy_signal(GtkWidget* widget, gpointer data) { 
-    printf("window_destroy_signal\n");
+    fprintf(stderr, "window_destroy_signal\n");
     cef_quit_message_loop();
 }
 
 GtkWidget* create_gtk_window(char* title, int width, int height) {
-    printf("create_gtk_window\n");
+    fprintf(stderr, "create_gtk_window\n");
     
     // Create window.
     GtkWidget* window = gtk_window_new(GTK_WINDOW_TOPLEVEL);

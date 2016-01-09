@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     initialize_app_handler(&app);
     
     // Execute subprocesses.
-    printf("cef_execute_process, argc=%d\n", argc);
+    fprintf(stderr, "cef_execute_process, argc=%d\n", argc);
     int code = cef_execute_process(&mainArgs, &app, NULL);
     if (code >= 0) {
         _exit(code);
@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
     settings.no_sandbox = 1;
 
     // Initialize CEF.
-    printf("cef_initialize\n");
+    fprintf(stderr, "cef_initialize\n");
     cef_initialize(&mainArgs, &settings, &app, NULL);
 
     // Create GTK window. You can pass a NULL handle 
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
             appPath[ppLen] = '\0';
         }
     }
-    printf("Executable's directory: %s\n", appPath);
+    fprintf(stderr, "Executable's directory: %s\n", appPath);
     
     // Initial url.
     char url[1024];
@@ -87,16 +87,16 @@ int main(int argc, char** argv) {
     initialize_client_handler(&client);
 
     // Create browser.
-    printf("cef_browser_host_create_browser\n");
+    fprintf(stderr, "cef_browser_host_create_browser\n");
     cef_browser_host_create_browser(&windowInfo, &client, &cefUrl,
             &browserSettings, NULL);
 
     // Message loop.
-    printf("cef_run_message_loop\n");
+    fprintf(stderr, "cef_run_message_loop\n");
     cef_run_message_loop();
 
     // Shutdown CEF.
-    printf("cef_shutdown\n");
+    fprintf(stderr, "cef_shutdown\n");
     cef_shutdown();
 
     return 0;
