@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <sys/prctl.h>
 
 #include <gdk/gdkx.h>
 
@@ -12,7 +14,84 @@
 #include "cef_client.h"
 #include "gtk.h"
 
+typedef struct {
+	int expectingDataSize;
+	int argumentsExpected;
+	char *commandName;
+	char *argument;
+} ReceivedCommand;
+
+void processArgument(ReceivedCommand *cmd, const char *data) {
+	if (cmd->argumentsExpected == -1) {
+		int i = atoi(data);
+		cmd->argumentsExpected = i;
+	} else if (cmd->expectingDataSize == -1) {
+		int i = atoi(data);
+		cmd->expectingDataSize = i;
+	} else {
+		int len = strlen(data) + 1;
+		cmd->argument = calloc(len, sizeof(char));
+		// append...
+		strncpy(cmd->argument, data, len);
+	}
+
+	if (cmd->argumentsExpected == 0 || (cmd->argumentsExpected == 1 && cmd->argument != NULL)) {
+		printf("ok\n");
+		printf("0\n");
+		fflush(stdout);
+		cmd->argumentsExpected = -1;
+		cmd->commandName = NULL;
+	}
+}
+
+void processNext(ReceivedCommand *cmd, const char *data) {
+	if (cmd->commandName == NULL) {
+		int len = strlen(data) + 1;
+		cmd->commandName = calloc(len, sizeof(char));
+		strncpy(cmd->commandName, data, len);
+		cmd->argumentsExpected = -1;
+	} else {
+		processArgument(cmd, data);
+	}
+}
+
+void *f(void *arg) {
+	int c = 0;
+	char buffer[128];
+	ReceivedCommand *cmd = NULL;
+	while((c = getchar()) != EOF) {
+		ungetc(c, stdin);
+		cmd = calloc(1, sizeof(ReceivedCommand));
+		cmd->expectingDataSize = -1;
+		cmd->commandName = NULL;
+j:
+		if (cmd->expectingDataSize == -1) {
+			// readLine
+			fgets(buffer, sizeof(buffer), stdin);
+			buffer[strlen(buffer) - 1] = 0;
+
+			processNext(cmd, buffer);
+
+			goto j;
+		} else {
+			// readDataBlock
+			char otherBuffer[cmd->expectingDataSize + 1];
+			fread(otherBuffer, 1, cmd->expectingDataSize, stdin);
+			otherBuffer[cmd->expectingDataSize] = 0;
+
+			processNext(cmd, otherBuffer);
+
+			cmd->expectingDataSize = -1;
+			goto j;
+		}
+	};
+
+	return NULL;
+}
+
 int main(int argc, char** argv) {
+    prctl(PR_SET_PDEATHSIG, SIGHUP);
+
     // Main args.
     cef_main_args_t mainArgs = {};
     mainArgs.argc = argc;
@@ -90,6 +169,12 @@ int main(int argc, char** argv) {
     fprintf(stderr, "cef_browser_host_create_browser\n");
     cef_browser_host_create_browser(&windowInfo, &client, &cefUrl,
             &browserSettings, NULL);
+
+    pthread_t pth;
+    pthread_create(&pth, NULL, f, NULL);
+
+    printf("Ready\n");
+    fflush(stdout);
 
     // Message loop.
     fprintf(stderr, "cef_run_message_loop\n");
