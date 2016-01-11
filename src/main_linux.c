@@ -12,6 +12,8 @@
 
 #include "cef_app.h"
 #include "cef_client.h"
+#include "cef_life_span_handler.h"
+#include "cef_load_handler.h"
 #include "gtk.h"
 
 typedef struct {
@@ -20,6 +22,16 @@ typedef struct {
 	char *commandName;
 	char *argument;
 } ReceivedCommand;
+
+void CEF_CALLBACK get_frame_source(struct _cef_string_visitor_t* self,
+    const cef_string_t* string) {
+	printf("ok\n");
+	cef_string_utf8_t out = {};
+	cef_string_utf16_to_utf8(string->str, string->length, &out);
+	printf("%zu\n", out.length);
+	printf("%s\n", out.str);
+	fflush(stdout);
+};
 
 void processArgument(ReceivedCommand *cmd, const char *data) {
 	if (cmd->argumentsExpected == -1) {
@@ -36,9 +48,28 @@ void processArgument(ReceivedCommand *cmd, const char *data) {
 	}
 
 	if (cmd->argumentsExpected == 0 || (cmd->argumentsExpected == 1 && cmd->argument != NULL)) {
-		printf("ok\n");
-		printf("0\n");
-		fflush(stdout);
+		if (strcmp(cmd->commandName, "Visit") == 0) {
+			cef_string_t some_url = {};
+			cef_string_utf8_to_utf16(cmd->argument, strlen(cmd->argument), &some_url);
+			cef_frame_t *frame = globalBrowser->get_main_frame(globalBrowser);
+			doneLoading = 0;
+			frame->load_url(frame, &some_url);
+			while (!doneLoading) {
+				usleep(100000);
+			}
+			printf("ok\n");
+			printf("0\n");
+			fflush(stdout);
+		} else if (strcmp(cmd->commandName, "Body") == 0) {
+			cef_string_visitor_t *visitor;
+			visitor = calloc(1, sizeof(cef_string_visitor_t));
+			visitor->base.size = sizeof(cef_string_visitor_t);
+			initialize_cef_base((cef_base_t*)visitor);
+			visitor->visit = get_frame_source;
+			cef_frame_t *frame = globalBrowser->get_main_frame(globalBrowser);
+			frame->get_source(frame, visitor);
+		}
+
 		cmd->argumentsExpected = -1;
 		cmd->commandName = NULL;
 	}
@@ -173,9 +204,6 @@ int main(int argc, char** argv) {
     pthread_t pth;
     pthread_create(&pth, NULL, f, NULL);
 
-    printf("Ready\n");
-    fflush(stdout);
-
     // Message loop.
     fprintf(stderr, "cef_run_message_loop\n");
     cef_run_message_loop();
@@ -185,4 +213,9 @@ int main(int argc, char** argv) {
     cef_shutdown();
 
     return 0;
+}
+
+static void ready() {
+    printf("Ready\n");
+    fflush(stdout);
 }

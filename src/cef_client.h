@@ -5,6 +5,8 @@
 #pragma once
 
 #include "cef_base.h"
+#include "cef_life_span_handler.h"
+#include "cef_load_handler.h"
 #include "include/capi/cef_client_capi.h"
 
 // ----------------------------------------------------------------------------
@@ -108,7 +110,18 @@ struct _cef_keyboard_handler_t* CEF_CALLBACK get_keyboard_handler(
 struct _cef_life_span_handler_t* CEF_CALLBACK get_life_span_handler(
         struct _cef_client_t* self) {
     DEBUG_CALLBACK("get_life_span_handler\n");
-    return NULL;
+
+    cef_life_span_handler_t *handler;
+    handler = calloc(1, sizeof(cef_life_span_handler_t));
+    handler->base.size = sizeof(cef_life_span_handler_t);
+    initialize_cef_base((cef_base_t*)handler);
+    handler->on_before_popup = on_before_popup;
+    handler->on_after_created = on_after_created;
+    handler->run_modal = run_modal;
+    handler->do_close = do_close;
+    handler->on_before_close = on_before_close;
+
+    return handler;
 }
 
 ///
@@ -117,7 +130,17 @@ struct _cef_life_span_handler_t* CEF_CALLBACK get_life_span_handler(
 struct _cef_load_handler_t* CEF_CALLBACK get_load_handler(
         struct _cef_client_t* self) {
     DEBUG_CALLBACK("get_load_handler\n");
-    return NULL;
+
+    cef_load_handler_t *handler;
+    handler = calloc(1, sizeof(cef_load_handler_t));
+    handler->base.size = sizeof(cef_load_handler_t);
+    initialize_cef_base((cef_base_t*)handler);
+    handler->on_loading_state_change = on_loading_state_change;
+    handler->on_load_start = on_load_start;
+    handler->on_load_end = on_load_end;
+    handler->on_load_error = on_load_error;
+
+    return handler;
 }
 
 ///
