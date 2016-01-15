@@ -110,26 +110,6 @@ describe Capybara::Webkit::Connection do
     Capybara::Webkit::Connection.new(:stdout => nil)
   end
 
-  it "returns the server port" do
-    connection.port.should be_between 0x400, 0xffff
-  end
-
-  it 'sets appropriate options on its socket' do
-    socket = double('socket')
-    TCPSocket.stub(:open).and_return(socket)
-    if defined?(Socket::TCP_NODELAY)
-      socket.should_receive(:setsockopt).with(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, true)
-    else
-      socket.should_not_receive(:setsockopt)
-    end
-    Capybara::Webkit::Connection.new
-  end
-
-  it "chooses a new port number for a new connection" do
-    new_connection = Capybara::Webkit::Connection.new
-    new_connection.port.should_not == connection.port
-  end
-
   let(:connection) { Capybara::Webkit::Connection.new }
 
   before(:all) do
