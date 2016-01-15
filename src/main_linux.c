@@ -159,27 +159,9 @@ int main(int argc, char** argv) {
     cef_window_info_t windowInfo = {};
     windowInfo.parent_window = gdk_x11_drawable_get_xid(gtk_widget_get_window(hwnd));
     // windowInfo.parent_window = hwnd;
-
-    // Executable's directory
-    char appPath[1024] = {};
-    ssize_t ppLen = readlink("/proc/self/exe", appPath,
-            sizeof(appPath)-1);
-    if (ppLen != -1 && ppLen > 0) {
-        appPath[ppLen] = '\0';
-        do {
-            ppLen -= 1;
-            appPath[ppLen+1] = '\0';
-        } while (appPath[ppLen] != '/' && ppLen > 0);
-        // No slash at the end.
-        if (ppLen > 0 && appPath[ppLen] == '/') {
-            appPath[ppLen] = '\0';
-        }
-    }
-    fprintf(stderr, "Executable's directory: %s\n", appPath);
     
     // Initial url.
-    char url[1024];
-    snprintf(url, sizeof(url), "file://%s/example.html", appPath);
+    char *url = "about:blank";
     // There is no _cef_string_t type.
     cef_string_t cefUrl = {};
     cef_string_utf8_to_utf16(url, strlen(url), &cefUrl);
