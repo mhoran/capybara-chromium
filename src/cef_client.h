@@ -111,9 +111,13 @@ struct _cef_life_span_handler_t* CEF_CALLBACK get_life_span_handler(
         struct _cef_client_t* self) {
     DEBUG_CALLBACK("get_life_span_handler\n");
 
-    cef_life_span_handler_t *handler;
-    handler = calloc(1, sizeof(cef_life_span_handler_t));
-    handler->base.size = sizeof(cef_life_span_handler_t);
+    life_span_handler_t *h;
+    h = calloc(1, sizeof(life_span_handler_t));
+
+    h->client = (client_t *)self;
+    cef_life_span_handler_t *handler = &h->handler;
+
+    handler->base.size = sizeof(life_span_handler_t);
     initialize_cef_base((cef_base_t*)handler);
     handler->on_before_popup = on_before_popup;
     handler->on_after_created = on_after_created;
@@ -121,7 +125,7 @@ struct _cef_life_span_handler_t* CEF_CALLBACK get_life_span_handler(
     handler->do_close = do_close;
     handler->on_before_close = on_before_close;
 
-    return handler;
+    return ((cef_life_span_handler_t *)h);
 }
 
 ///

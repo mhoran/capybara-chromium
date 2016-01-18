@@ -4,9 +4,18 @@
 
 #pragma once
 
+#include "include/capi/cef_client_capi.h"
 #include "include/capi/cef_life_span_handler_capi.h"
 
-static cef_browser_t *globalBrowser = NULL;
+typedef struct {
+	cef_client_t client;
+	cef_browser_t *browser;
+} client_t;
+
+typedef struct {
+	cef_life_span_handler_t handler;
+	client_t *client;
+} life_span_handler_t;
 
 static void ready();
 
@@ -42,7 +51,8 @@ int CEF_CALLBACK on_before_popup(struct _cef_life_span_handler_t* self,
 ///
 void CEF_CALLBACK on_after_created(struct _cef_life_span_handler_t* self,
     struct _cef_browser_t* browser) {
-    	globalBrowser = browser;
+    	life_span_handler_t *handler = (life_span_handler_t *)self;
+    	handler->client->browser = browser;
 	ready();
 }
 

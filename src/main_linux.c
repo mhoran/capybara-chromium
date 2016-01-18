@@ -33,7 +33,7 @@ void CEF_CALLBACK get_frame_source(struct _cef_string_visitor_t* self,
 	fflush(stdout);
 };
 
-void processArgument(ReceivedCommand *cmd, const char *data) {
+void processArgument(ReceivedCommand *cmd, const char *data, client_t *client) {
 	if (cmd->argumentsExpected == -1) {
 		int i = atoi(data);
 		cmd->argumentsExpected = i;
@@ -51,7 +51,7 @@ void processArgument(ReceivedCommand *cmd, const char *data) {
 		if (strcmp(cmd->commandName, "Visit") == 0) {
 			cef_string_t some_url = {};
 			cef_string_utf8_to_utf16(cmd->argument, strlen(cmd->argument), &some_url);
-			cef_frame_t *frame = globalBrowser->get_main_frame(globalBrowser);
+			cef_frame_t *frame = client->browser->get_main_frame(client->browser);
 			doneLoading = 0;
 			frame->load_url(frame, &some_url);
 			while (!doneLoading) {
@@ -66,7 +66,7 @@ void processArgument(ReceivedCommand *cmd, const char *data) {
 			visitor->base.size = sizeof(cef_string_visitor_t);
 			initialize_cef_base((cef_base_t*)visitor);
 			visitor->visit = get_frame_source;
-			cef_frame_t *frame = globalBrowser->get_main_frame(globalBrowser);
+			cef_frame_t *frame = client->browser->get_main_frame(client->browser);
 			frame->get_source(frame, visitor);
 		}
 
@@ -75,18 +75,19 @@ void processArgument(ReceivedCommand *cmd, const char *data) {
 	}
 }
 
-void processNext(ReceivedCommand *cmd, const char *data) {
+void processNext(ReceivedCommand *cmd, const char *data, client_t *client) {
 	if (cmd->commandName == NULL) {
 		int len = strlen(data) + 1;
 		cmd->commandName = calloc(len, sizeof(char));
 		strncpy(cmd->commandName, data, len);
 		cmd->argumentsExpected = -1;
 	} else {
-		processArgument(cmd, data);
+		processArgument(cmd, data, client);
 	}
 }
 
 void *f(void *arg) {
+	client_t *client = (client_t *)arg;
 	int c = 0;
 	char buffer[128];
 	ReceivedCommand *cmd = NULL;
@@ -101,7 +102,7 @@ j:
 			fgets(buffer, sizeof(buffer), stdin);
 			buffer[strlen(buffer) - 1] = 0;
 
-			processNext(cmd, buffer);
+			processNext(cmd, buffer, client);
 
 			goto j;
 		} else {
@@ -110,7 +111,7 @@ j:
 			fread(otherBuffer, 1, cmd->expectingDataSize, stdin);
 			otherBuffer[cmd->expectingDataSize] = 0;
 
-			processNext(cmd, otherBuffer);
+			processNext(cmd, otherBuffer, client);
 
 			cmd->expectingDataSize = -1;
 			goto j;
@@ -175,16 +176,17 @@ int main(int argc, char** argv) {
     // cef_client_t structure must be filled. It must implement
     // reference counting. You cannot pass a structure 
     // initialized with zeroes.
-    cef_client_t client = {};
-    initialize_client_handler(&client);
+    client_t client = {};
+    client.browser = NULL;
+    initialize_client_handler((cef_client_t *)&client);
 
     // Create browser.
     fprintf(stderr, "cef_browser_host_create_browser\n");
-    cef_browser_host_create_browser(&windowInfo, &client, &cefUrl,
+    cef_browser_host_create_browser(&windowInfo, (cef_client_t *)&client, &cefUrl,
             &browserSettings, NULL);
 
     pthread_t pth;
-    pthread_create(&pth, NULL, f, NULL);
+    pthread_create(&pth, NULL, f, &client);
 
     // Message loop.
     fprintf(stderr, "cef_run_message_loop\n");
