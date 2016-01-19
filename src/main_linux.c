@@ -33,6 +33,14 @@ void CEF_CALLBACK get_frame_source(struct _cef_string_visitor_t* self,
 	fflush(stdout);
 };
 
+void
+handle_load_event()
+{
+	printf("ok\n");
+	printf("0\n");
+	fflush(stdout);
+}
+
 void processArgument(ReceivedCommand *cmd, const char *data, client_t *client) {
 	if (cmd->argumentsExpected == -1) {
 		int i = atoi(data);
@@ -52,14 +60,8 @@ void processArgument(ReceivedCommand *cmd, const char *data, client_t *client) {
 			cef_string_t some_url = {};
 			cef_string_utf8_to_utf16(cmd->argument, strlen(cmd->argument), &some_url);
 			cef_frame_t *frame = client->browser->get_main_frame(client->browser);
-			doneLoading = 0;
+			client->on_load_end = handle_load_event;
 			frame->load_url(frame, &some_url);
-			while (!doneLoading) {
-				usleep(100000);
-			}
-			printf("ok\n");
-			printf("0\n");
-			fflush(stdout);
 		} else if (strcmp(cmd->commandName, "Body") == 0) {
 			cef_string_visitor_t *visitor;
 			visitor = calloc(1, sizeof(cef_string_visitor_t));
@@ -161,12 +163,6 @@ int main(int argc, char** argv) {
     windowInfo.parent_window = gdk_x11_drawable_get_xid(gtk_widget_get_window(hwnd));
     // windowInfo.parent_window = hwnd;
     
-    // Initial url.
-    char *url = "about:blank";
-    // There is no _cef_string_t type.
-    cef_string_t cefUrl = {};
-    cef_string_utf8_to_utf16(url, strlen(url), &cefUrl);
-    
     // Browser settings.
     // It is mandatory to set the "size" member.
     cef_browser_settings_t browserSettings = {};
@@ -178,11 +174,12 @@ int main(int argc, char** argv) {
     // initialized with zeroes.
     client_t client = {};
     client.browser = NULL;
+    client.on_load_end = NULL;
     initialize_client_handler((cef_client_t *)&client);
 
     // Create browser.
     fprintf(stderr, "cef_browser_host_create_browser\n");
-    cef_browser_host_create_browser(&windowInfo, (cef_client_t *)&client, &cefUrl,
+    cef_browser_host_create_browser(&windowInfo, (cef_client_t *)&client, NULL,
             &browserSettings, NULL);
 
     pthread_t pth;

@@ -135,9 +135,13 @@ struct _cef_load_handler_t* CEF_CALLBACK get_load_handler(
         struct _cef_client_t* self) {
     DEBUG_CALLBACK("get_load_handler\n");
 
-    cef_load_handler_t *handler;
-    handler = calloc(1, sizeof(cef_load_handler_t));
-    handler->base.size = sizeof(cef_load_handler_t);
+    load_handler *h;
+    h = calloc(1, sizeof(load_handler));
+
+    h->client = (client_t *)self;
+    cef_load_handler_t *handler = &h->handler;
+
+    handler->base.size = sizeof(load_handler);
     initialize_cef_base((cef_base_t*)handler);
     handler->on_loading_state_change = on_loading_state_change;
     handler->on_load_start = on_load_start;
