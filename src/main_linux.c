@@ -6,15 +6,21 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <unistd.h>
+#include <signal.h>
 #include <sys/prctl.h>
+
+#ifndef WINDOWLESS
 
 #include <gdk/gdkx.h>
 
+#include "gtk.h"
+#endif
 #include "cef_app.h"
 #include "cef_client.h"
 #include "cef_life_span_handler.h"
 #include "cef_load_handler.h"
-#include "gtk.h"
+#include "cef_render_handler.h"
 
 typedef struct {
 	int expectingDataSize;
@@ -155,13 +161,17 @@ int main(int argc, char** argv) {
     fprintf(stderr, "cef_initialize\n");
     cef_initialize(&mainArgs, &settings, &app, NULL);
 
+    cef_window_info_t windowInfo = {};
+#ifndef WINDOWLESS
     // Create GTK window. You can pass a NULL handle 
     // to CEF and then it will create a window of its own.
     initialize_gtk();
     GtkWidget* hwnd = create_gtk_window("cefcapi example", 1024, 768);
-    cef_window_info_t windowInfo = {};
     windowInfo.parent_window = gdk_x11_drawable_get_xid(gtk_widget_get_window(hwnd));
     // windowInfo.parent_window = hwnd;
+#else
+    windowInfo.windowless_rendering_enabled = 1;
+#endif
     
     // Browser settings.
     // It is mandatory to set the "size" member.

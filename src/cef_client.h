@@ -7,6 +7,8 @@
 #include "cef_base.h"
 #include "cef_life_span_handler.h"
 #include "cef_load_handler.h"
+#include "cef_render_handler.h"
+
 #include "include/capi/cef_client_capi.h"
 
 // ----------------------------------------------------------------------------
@@ -157,7 +159,27 @@ struct _cef_load_handler_t* CEF_CALLBACK get_load_handler(
 struct _cef_render_handler_t* CEF_CALLBACK get_render_handler(
         struct _cef_client_t* self) {
     DEBUG_CALLBACK("get_render_handler\n");
+
+#ifdef WINDOWLESS
+    cef_render_handler_t *handler;
+    handler = calloc(1, sizeof(cef_render_handler_t));
+
+    handler->get_root_screen_rect = get_root_screen_rect;
+    handler->get_screen_info = get_screen_info;
+    handler->get_screen_point = get_screen_point;
+    handler->get_view_rect = get_view_rect;
+    handler->on_cursor_change = on_cursor_change;
+    handler->on_paint = on_paint;
+    handler->on_popup_show = on_popup_show;
+    handler->on_popup_size = on_popup_size;
+    handler->on_scroll_offset_changed = on_scroll_offset_changed;
+    handler->start_dragging = start_dragging;
+    handler->update_drag_cursor = update_drag_cursor;
+
+    return handler;
+#else
     return NULL;
+#endif
 }
 
 ///
