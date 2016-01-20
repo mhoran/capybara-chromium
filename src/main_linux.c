@@ -24,7 +24,7 @@
 typedef struct {
 	int argumentsExpected;
 	char *commandName;
-	char *argument;
+	char **arguments;
 } ReceivedCommand;
 
 void CEF_CALLBACK get_frame_source(struct _cef_string_visitor_t* self,
@@ -45,25 +45,28 @@ handle_load_event()
 	fflush(stdout);
 }
 
-void processArgument(ReceivedCommand *cmd, const char *data, client_t *client,
-    int *expectingDataSize) {
+void
+processArgument(ReceivedCommand *cmd, const char *data, client_t *client,
+    int *expectingDataSize, int *argument_index)
+{
 	if (cmd->argumentsExpected == -1) {
 		int i = atoi(data);
 		cmd->argumentsExpected = i;
+		cmd->arguments = calloc(i, sizeof(char *));
 	} else if (*expectingDataSize == -1) {
 		int i = atoi(data);
 		*expectingDataSize = i;
 	} else {
 		int len = strlen(data) + 1;
-		cmd->argument = calloc(len, sizeof(char));
-		// append...
-		strncpy(cmd->argument, data, len);
+		cmd->arguments[*argument_index] = calloc(len, sizeof(char));
+		strncpy(cmd->arguments[*argument_index], data, len);
+		*argument_index += 1;
 	}
 
-	if (cmd->argumentsExpected == 0 || (cmd->argumentsExpected == 1 && cmd->argument != NULL)) {
+	if (*argument_index == cmd->argumentsExpected) {
 		if (strcmp(cmd->commandName, "Visit") == 0) {
 			cef_string_t some_url = {};
-			cef_string_utf8_to_utf16(cmd->argument, strlen(cmd->argument), &some_url);
+			cef_string_utf8_to_utf16(cmd->arguments[0], strlen(cmd->arguments[0]), &some_url);
 			cef_frame_t *frame = client->browser->get_main_frame(client->browser);
 			client->on_load_end = handle_load_event;
 			frame->load_url(frame, &some_url);
@@ -79,22 +82,26 @@ void processArgument(ReceivedCommand *cmd, const char *data, client_t *client,
 
 		cmd->argumentsExpected = -1;
 		cmd->commandName = NULL;
+		*argument_index = 0;
 	}
 }
 
-void processNext(ReceivedCommand *cmd, const char *data, client_t *client, int *expectingDataSize) {
+void
+processNext(ReceivedCommand *cmd, const char *data, client_t *client, int *expectingDataSize,
+    int *argument_index)
+{
 	if (cmd->commandName == NULL) {
 		int len = strlen(data) + 1;
 		cmd->commandName = calloc(len, sizeof(char));
 		strncpy(cmd->commandName, data, len);
 		cmd->argumentsExpected = -1;
 	} else {
-		processArgument(cmd, data, client, expectingDataSize);
+		processArgument(cmd, data, client, expectingDataSize, argument_index);
 	}
 }
 
 void
-checkNext(client_t *client, ReceivedCommand *cmd, int *expectingDataSize)
+checkNext(client_t *client, ReceivedCommand *cmd, int *expectingDataSize, int *argument_index)
 {
 	if (*expectingDataSize == -1) {
 		// readLine
@@ -104,9 +111,9 @@ checkNext(client_t *client, ReceivedCommand *cmd, int *expectingDataSize)
 		    return;
 		buffer[strlen(buffer) - 1] = 0;
 
-		processNext(cmd, buffer, client, expectingDataSize);
+		processNext(cmd, buffer, client, expectingDataSize, argument_index);
 
-		checkNext(client, cmd, expectingDataSize);
+		checkNext(client, cmd, expectingDataSize, argument_index);
 	} else {
 		// readDataBlock
 		char otherBuffer[*expectingDataSize + 1];
@@ -116,10 +123,10 @@ checkNext(client_t *client, ReceivedCommand *cmd, int *expectingDataSize)
 			return;
 		otherBuffer[*expectingDataSize] = 0;
 
-		processNext(cmd, otherBuffer, client, expectingDataSize);
+		processNext(cmd, otherBuffer, client, expectingDataSize, argument_index);
 
 		*expectingDataSize = -1;
-		checkNext(client, cmd, expectingDataSize);
+		checkNext(client, cmd, expectingDataSize, argument_index);
 	}
 }
 
@@ -130,8 +137,9 @@ void *f(void *arg) {
 		cmd = calloc(1, sizeof(ReceivedCommand));
 		cmd->commandName = NULL;
 		int expectingDataSize = -1;
+		int argument_index = 0;
 
-		checkNext(client, cmd, &expectingDataSize);
+		checkNext(client, cmd, &expectingDataSize, &argument_index);
 	}
 
 	cef_browser_host_t *host = client->browser->get_host(client->browser);
