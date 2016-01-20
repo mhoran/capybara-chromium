@@ -62,28 +62,6 @@ processArgument(ReceivedCommand *cmd, const char *data, client_t *client,
 		strncpy(cmd->arguments[*argument_index], data, len);
 		*argument_index += 1;
 	}
-
-	if (*argument_index == cmd->argumentsExpected) {
-		if (strcmp(cmd->commandName, "Visit") == 0) {
-			cef_string_t some_url = {};
-			cef_string_utf8_to_utf16(cmd->arguments[0], strlen(cmd->arguments[0]), &some_url);
-			cef_frame_t *frame = client->browser->get_main_frame(client->browser);
-			client->on_load_end = handle_load_event;
-			frame->load_url(frame, &some_url);
-		} else if (strcmp(cmd->commandName, "Body") == 0) {
-			cef_string_visitor_t *visitor;
-			visitor = calloc(1, sizeof(cef_string_visitor_t));
-			visitor->base.size = sizeof(cef_string_visitor_t);
-			initialize_cef_base((cef_base_t*)visitor);
-			visitor->visit = get_frame_source;
-			cef_frame_t *frame = client->browser->get_main_frame(client->browser);
-			frame->get_source(frame, visitor);
-		}
-
-		cmd->argumentsExpected = -1;
-		cmd->commandName = NULL;
-		*argument_index = 0;
-	}
 }
 
 void
@@ -112,8 +90,6 @@ checkNext(client_t *client, ReceivedCommand *cmd, int *expectingDataSize, int *a
 		buffer[strlen(buffer) - 1] = 0;
 
 		processNext(cmd, buffer, client, expectingDataSize, argument_index);
-
-		checkNext(client, cmd, expectingDataSize, argument_index);
 	} else {
 		// readDataBlock
 		char otherBuffer[*expectingDataSize + 1];
@@ -126,8 +102,10 @@ checkNext(client_t *client, ReceivedCommand *cmd, int *expectingDataSize, int *a
 		processNext(cmd, otherBuffer, client, expectingDataSize, argument_index);
 
 		*expectingDataSize = -1;
-		checkNext(client, cmd, expectingDataSize, argument_index);
 	}
+
+	if (*argument_index != cmd->argumentsExpected)
+		checkNext(client, cmd, expectingDataSize, argument_index);
 }
 
 void *f(void *arg) {
@@ -140,6 +118,22 @@ void *f(void *arg) {
 		int argument_index = 0;
 
 		checkNext(client, cmd, &expectingDataSize, &argument_index);
+
+		if (strcmp(cmd->commandName, "Visit") == 0) {
+			cef_string_t some_url = {};
+			cef_string_utf8_to_utf16(cmd->arguments[0], strlen(cmd->arguments[0]), &some_url);
+			cef_frame_t *frame = client->browser->get_main_frame(client->browser);
+			client->on_load_end = handle_load_event;
+			frame->load_url(frame, &some_url);
+		} else if (strcmp(cmd->commandName, "Body") == 0) {
+			cef_string_visitor_t *visitor;
+			visitor = calloc(1, sizeof(cef_string_visitor_t));
+			visitor->base.size = sizeof(cef_string_visitor_t);
+			initialize_cef_base((cef_base_t*)visitor);
+			visitor->visit = get_frame_source;
+			cef_frame_t *frame = client->browser->get_main_frame(client->browser);
+			frame->get_source(frame, visitor);
+		}
 	}
 
 	cef_browser_host_t *host = client->browser->get_host(client->browser);
