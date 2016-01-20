@@ -138,5 +138,7 @@ int CEF_CALLBACK do_close(struct _cef_life_span_handler_t* self,
 // additional usage information.
 ///
 void CEF_CALLBACK on_before_close(struct _cef_life_span_handler_t* self,
-    struct _cef_browser_t* browser) {
+    struct _cef_browser_t* browser)
+{
+	cef_quit_message_loop();
 }

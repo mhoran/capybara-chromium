@@ -8,7 +8,6 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <signal.h>
-#include <sys/prctl.h>
 
 #ifndef WINDOWLESS
 
@@ -23,7 +22,6 @@
 #include "cef_render_handler.h"
 
 typedef struct {
-	int expectingDataSize;
 	int argumentsExpected;
 	char *commandName;
 	char *argument;
@@ -47,13 +45,14 @@ handle_load_event()
 	fflush(stdout);
 }
 
-void processArgument(ReceivedCommand *cmd, const char *data, client_t *client) {
+void processArgument(ReceivedCommand *cmd, const char *data, client_t *client,
+    int *expectingDataSize) {
 	if (cmd->argumentsExpected == -1) {
 		int i = atoi(data);
 		cmd->argumentsExpected = i;
-	} else if (cmd->expectingDataSize == -1) {
+	} else if (*expectingDataSize == -1) {
 		int i = atoi(data);
-		cmd->expectingDataSize = i;
+		*expectingDataSize = i;
 	} else {
 		int len = strlen(data) + 1;
 		cmd->argument = calloc(len, sizeof(char));
@@ -83,55 +82,65 @@ void processArgument(ReceivedCommand *cmd, const char *data, client_t *client) {
 	}
 }
 
-void processNext(ReceivedCommand *cmd, const char *data, client_t *client) {
+void processNext(ReceivedCommand *cmd, const char *data, client_t *client, int *expectingDataSize) {
 	if (cmd->commandName == NULL) {
 		int len = strlen(data) + 1;
 		cmd->commandName = calloc(len, sizeof(char));
 		strncpy(cmd->commandName, data, len);
 		cmd->argumentsExpected = -1;
 	} else {
-		processArgument(cmd, data, client);
+		processArgument(cmd, data, client, expectingDataSize);
+	}
+}
+
+void
+checkNext(client_t *client, ReceivedCommand *cmd, int *expectingDataSize)
+{
+	if (*expectingDataSize == -1) {
+		// readLine
+		char buffer[128];
+		fgets(buffer, sizeof(buffer), stdin);
+		if (feof(stdin))
+		    return;
+		buffer[strlen(buffer) - 1] = 0;
+
+		processNext(cmd, buffer, client, expectingDataSize);
+
+		checkNext(client, cmd, expectingDataSize);
+	} else {
+		// readDataBlock
+		char otherBuffer[*expectingDataSize + 1];
+		int bytesRead;
+		bytesRead = fread(otherBuffer, 1, *expectingDataSize, stdin);
+		if (bytesRead != *expectingDataSize)
+			return;
+		otherBuffer[*expectingDataSize] = 0;
+
+		processNext(cmd, otherBuffer, client, expectingDataSize);
+
+		*expectingDataSize = -1;
+		checkNext(client, cmd, expectingDataSize);
 	}
 }
 
 void *f(void *arg) {
 	client_t *client = (client_t *)arg;
-	int c = 0;
-	char buffer[128];
-	ReceivedCommand *cmd = NULL;
-	while((c = getchar()) != EOF) {
-		ungetc(c, stdin);
+	while (!feof(stdin)) {
+		ReceivedCommand *cmd;
 		cmd = calloc(1, sizeof(ReceivedCommand));
-		cmd->expectingDataSize = -1;
 		cmd->commandName = NULL;
-j:
-		if (cmd->expectingDataSize == -1) {
-			// readLine
-			fgets(buffer, sizeof(buffer), stdin);
-			buffer[strlen(buffer) - 1] = 0;
+		int expectingDataSize = -1;
 
-			processNext(cmd, buffer, client);
+		checkNext(client, cmd, &expectingDataSize);
+	}
 
-			goto j;
-		} else {
-			// readDataBlock
-			char otherBuffer[cmd->expectingDataSize + 1];
-			fread(otherBuffer, 1, cmd->expectingDataSize, stdin);
-			otherBuffer[cmd->expectingDataSize] = 0;
-
-			processNext(cmd, otherBuffer, client);
-
-			cmd->expectingDataSize = -1;
-			goto j;
-		}
-	};
+	cef_browser_host_t *host = client->browser->get_host(client->browser);
+	host->close_browser(host, 1);
 
 	return NULL;
 }
 
 int main(int argc, char** argv) {
-    prctl(PR_SET_PDEATHSIG, SIGHUP);
-
     // Main args.
     cef_main_args_t mainArgs = {};
     mainArgs.argc = argc;
