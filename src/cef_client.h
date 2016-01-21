@@ -164,6 +164,8 @@ struct _cef_render_handler_t* CEF_CALLBACK get_render_handler(
     cef_render_handler_t *handler;
     handler = calloc(1, sizeof(cef_render_handler_t));
 
+    handler->base.size = sizeof(load_handler);
+    initialize_cef_base((cef_base_t*)handler);
     handler->get_root_screen_rect = get_root_screen_rect;
     handler->get_screen_info = get_screen_info;
     handler->get_screen_point = get_screen_point;
