@@ -46,8 +46,27 @@ handle_load_event()
 }
 
 void
-processArgument(ReceivedCommand *cmd, const char *data, client_t *client,
-    int *expectingDataSize, int *argument_index)
+startCommand(ReceivedCommand *cmd, client_t *client)
+{
+	if (strcmp(cmd->commandName, "Visit") == 0) {
+		cef_string_t some_url = {};
+		cef_string_utf8_to_utf16(cmd->arguments[0], strlen(cmd->arguments[0]), &some_url);
+		cef_frame_t *frame = client->browser->get_main_frame(client->browser);
+		client->on_load_end = handle_load_event;
+		frame->load_url(frame, &some_url);
+	} else if (strcmp(cmd->commandName, "Body") == 0) {
+		cef_string_visitor_t *visitor;
+		visitor = calloc(1, sizeof(cef_string_visitor_t));
+		visitor->base.size = sizeof(cef_string_visitor_t);
+		initialize_cef_base((cef_base_t*)visitor);
+		visitor->visit = get_frame_source;
+		cef_frame_t *frame = client->browser->get_main_frame(client->browser);
+		frame->get_source(frame, visitor);
+	}
+}
+
+void
+processArgument(ReceivedCommand *cmd, const char *data, int *expectingDataSize, int *argument_index)
 {
 	if (cmd->argumentsExpected == -1) {
 		int i = atoi(data);
@@ -65,21 +84,19 @@ processArgument(ReceivedCommand *cmd, const char *data, client_t *client,
 }
 
 void
-processNext(ReceivedCommand *cmd, const char *data, client_t *client, int *expectingDataSize,
-    int *argument_index)
+processNext(ReceivedCommand *cmd, const char *data, int *expectingDataSize, int *argument_index)
 {
 	if (cmd->commandName == NULL) {
 		int len = strlen(data) + 1;
 		cmd->commandName = calloc(len, sizeof(char));
 		strncpy(cmd->commandName, data, len);
-		cmd->argumentsExpected = -1;
 	} else {
-		processArgument(cmd, data, client, expectingDataSize, argument_index);
+		processArgument(cmd, data, expectingDataSize, argument_index);
 	}
 }
 
 void
-checkNext(client_t *client, ReceivedCommand *cmd, int *expectingDataSize, int *argument_index)
+checkNext(ReceivedCommand *cmd, int *expectingDataSize, int *argument_index)
 {
 	if (*expectingDataSize == -1) {
 		// readLine
@@ -89,7 +106,7 @@ checkNext(client_t *client, ReceivedCommand *cmd, int *expectingDataSize, int *a
 		    return;
 		buffer[strlen(buffer) - 1] = 0;
 
-		processNext(cmd, buffer, client, expectingDataSize, argument_index);
+		processNext(cmd, buffer, expectingDataSize, argument_index);
 	} else {
 		// readDataBlock
 		char otherBuffer[*expectingDataSize + 1];
@@ -99,13 +116,13 @@ checkNext(client_t *client, ReceivedCommand *cmd, int *expectingDataSize, int *a
 			return;
 		otherBuffer[*expectingDataSize] = 0;
 
-		processNext(cmd, otherBuffer, client, expectingDataSize, argument_index);
+		processNext(cmd, otherBuffer, expectingDataSize, argument_index);
 
 		*expectingDataSize = -1;
 	}
 
 	if (*argument_index != cmd->argumentsExpected)
-		checkNext(client, cmd, expectingDataSize, argument_index);
+		checkNext(cmd, expectingDataSize, argument_index);
 }
 
 void *f(void *arg) {
@@ -114,26 +131,14 @@ void *f(void *arg) {
 		ReceivedCommand *cmd;
 		cmd = calloc(1, sizeof(ReceivedCommand));
 		cmd->commandName = NULL;
+		cmd->argumentsExpected = -1;
 		int expectingDataSize = -1;
 		int argument_index = 0;
 
-		checkNext(client, cmd, &expectingDataSize, &argument_index);
+		checkNext(cmd, &expectingDataSize, &argument_index);
 
-		if (strcmp(cmd->commandName, "Visit") == 0) {
-			cef_string_t some_url = {};
-			cef_string_utf8_to_utf16(cmd->arguments[0], strlen(cmd->arguments[0]), &some_url);
-			cef_frame_t *frame = client->browser->get_main_frame(client->browser);
-			client->on_load_end = handle_load_event;
-			frame->load_url(frame, &some_url);
-		} else if (strcmp(cmd->commandName, "Body") == 0) {
-			cef_string_visitor_t *visitor;
-			visitor = calloc(1, sizeof(cef_string_visitor_t));
-			visitor->base.size = sizeof(cef_string_visitor_t);
-			initialize_cef_base((cef_base_t*)visitor);
-			visitor->visit = get_frame_source;
-			cef_frame_t *frame = client->browser->get_main_frame(client->browser);
-			frame->get_source(frame, visitor);
-		}
+		if (argument_index == cmd->argumentsExpected)
+			startCommand(cmd, client);
 	}
 
 	cef_browser_host_t *host = client->browser->get_host(client->browser);
