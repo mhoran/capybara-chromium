@@ -33,7 +33,7 @@ void CEF_CALLBACK get_frame_source(struct _cef_string_visitor_t* self,
 	cef_string_utf8_t out = {};
 	cef_string_utf16_to_utf8(string->str, string->length, &out);
 	printf("%zu\n", out.length);
-	printf("%s\n", out.str);
+	printf("%s", out.str);
 	fflush(stdout);
 };
 
