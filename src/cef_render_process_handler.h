@@ -31,7 +31,7 @@ on_web_kit_initialized(
     struct _cef_render_process_handler_t* self)
 {
 	cef_string_t extension_name = {};
-	cef_string_utf8_to_utf16("Capybara", 8, &extension_name);
+	cef_string_set(u"Capybara", 8, &extension_name, 0);
 	cef_register_extension(&extension_name, loadJavascript(), NULL);
 };
 
@@ -188,35 +188,31 @@ on_render_process_message_received(
 		cef_v8value_t *invocation = cef_v8value_create_object(NULL);
 
 		cef_v8value_t *function_name = cef_v8value_create_string(arguments->get_string(arguments, 0));
-		cef_string_t function_name_key = {};
-		cef_string_utf8_to_utf16("functionName", 12, &function_name_key);
-		invocation->set_value_bykey(invocation, &function_name_key, function_name, V8_PROPERTY_ATTRIBUTE_NONE);
+		cef_string_t key = {};
+		cef_string_set(u"functionName", 12, &key, 0);
+		invocation->set_value_bykey(invocation, &key, function_name, V8_PROPERTY_ATTRIBUTE_NONE);
 
 		cef_v8value_t *allow_unattached = cef_v8value_create_bool(arguments->get_bool(arguments, 1));
-		cef_string_t allow_unattached_key = {};
-		cef_string_utf8_to_utf16("allowUnattached", 15, &allow_unattached_key);
-		invocation->set_value_bykey(invocation, &allow_unattached_key, allow_unattached, V8_PROPERTY_ATTRIBUTE_NONE);
+		cef_string_set(u"allowUnattached", 15, &key, 0);
+		invocation->set_value_bykey(invocation, &key, allow_unattached, V8_PROPERTY_ATTRIBUTE_NONE);
 
 		cef_v8value_t *invocation_arguments = cef_v8value_create_array(1);
 		cef_v8value_t *argument = cef_v8value_create_string(arguments->get_string(arguments, 2));
 		invocation_arguments->set_value_byindex(invocation_arguments, 0, argument);
 
-		cef_string_t arguments_key = {};
-		cef_string_utf8_to_utf16("arguments", 9, &arguments_key);
-		invocation->set_value_bykey(invocation, &arguments_key, invocation_arguments, V8_PROPERTY_ATTRIBUTE_NONE);
+		cef_string_set(u"arguments", 9, &key, 0);
+		invocation->set_value_bykey(invocation, &key, invocation_arguments, V8_PROPERTY_ATTRIBUTE_NONE);
 
 		cef_v8value_t *object = context->get_global(context);
 
-		cef_string_t capybara_invocation_key = {};
-		cef_string_utf8_to_utf16("CapybaraInvocation", 18, &capybara_invocation_key);
-		object->set_value_bykey(object, &capybara_invocation_key, invocation, V8_PROPERTY_ATTRIBUTE_NONE);
+		cef_string_set(u"CapybaraInvocation", 18, &key, 0);
+		object->set_value_bykey(object, &key, invocation, V8_PROPERTY_ATTRIBUTE_NONE);
 
-		cef_string_t capybara_invoke = {};
-		cef_string_utf8_to_utf16("Capybara.invoke()", 17, &capybara_invoke);
+		cef_string_set(u"Capybara.invoke()", 17, &key, 0);
 
 		cef_v8value_t *retval = NULL;
 		cef_v8exception_t *exception = NULL;
-		if (context->eval(context, &capybara_invoke, &retval, &exception))
+		if (context->eval(context, &key, &retval, &exception))
 			handle_invocation_result(retval);
 
 		context->exit(context);

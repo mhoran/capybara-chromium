@@ -65,13 +65,13 @@ startCommand(ReceivedCommand *cmd, client_t *client)
 	} else if (strcmp(cmd->commandName, "FindCss") == 0 ) {
 		fprintf(stderr, "Received FindCss\n");
 		cef_string_t message_name = {};
-		cef_string_utf8_to_utf16("CapybaraInvocation", 18, &message_name);
+		cef_string_set(u"CapybaraInvocation", 18, &message_name, 0);
 		cef_process_message_t *message = cef_process_message_create(&message_name);
 
 		cef_list_value_t *args = message->get_argument_list(message);
 
 		cef_string_t name = {};
-		cef_string_utf8_to_utf16("findCss", 7, &name);
+		cef_string_set(u"findCss", 7, &name, 0);
 		args->set_string(args, 0, &name);
 
 		args->set_bool(args, 1, 1);
@@ -84,7 +84,7 @@ startCommand(ReceivedCommand *cmd, client_t *client)
 	} else if (strcmp(cmd->commandName, "Node") == 0 ) {
 		fprintf(stderr, "Received Node\n");
 		cef_string_t message_name = {};
-		cef_string_utf8_to_utf16("CapybaraInvocation", 18, &message_name);
+		cef_string_set(u"CapybaraInvocation", 18, &message_name, 0);
 		cef_process_message_t *message = cef_process_message_create(&message_name);
 
 		cef_list_value_t *args = message->get_argument_list(message);
