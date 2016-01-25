@@ -62,6 +62,49 @@ startCommand(ReceivedCommand *cmd, client_t *client)
 		visitor->visit = get_frame_source;
 		cef_frame_t *frame = client->browser->get_main_frame(client->browser);
 		frame->get_source(frame, visitor);
+	} else if (strcmp(cmd->commandName, "FindCss") == 0 ) {
+		fprintf(stderr, "Received FindCss\n");
+		cef_string_t message_name = {};
+		cef_string_utf8_to_utf16("CapybaraInvocation", 18, &message_name);
+		cef_process_message_t *message = cef_process_message_create(&message_name);
+
+		cef_list_value_t *args = message->get_argument_list(message);
+
+		cef_string_t name = {};
+		cef_string_utf8_to_utf16("findCss", 7, &name);
+		args->set_string(args, 0, &name);
+
+		args->set_bool(args, 1, 1);
+
+		cef_string_t argument = {};
+		cef_string_utf8_to_utf16(cmd->arguments[0], strlen(cmd->arguments[0]), &argument);
+		args->set_string(args, 2, &argument);
+
+		client->browser->send_process_message(client->browser, PID_RENDERER, message);
+	} else if (strcmp(cmd->commandName, "Node") == 0 ) {
+		fprintf(stderr, "Received Node\n");
+		cef_string_t message_name = {};
+		cef_string_utf8_to_utf16("CapybaraInvocation", 18, &message_name);
+		cef_process_message_t *message = cef_process_message_create(&message_name);
+
+		cef_list_value_t *args = message->get_argument_list(message);
+
+		cef_string_t function_name = {};
+		cef_string_utf8_to_utf16(cmd->arguments[0], strlen(cmd->arguments[0]), &function_name);
+		args->set_string(args, 0, &function_name);
+
+		args->set_bool(args, 1, strcmp(cmd->arguments[1], "true") == 0);
+
+		cef_string_t argument = {};
+		cef_string_utf8_to_utf16(cmd->arguments[2], strlen(cmd->arguments[2]), &argument);
+		args->set_string(args, 2, &argument);
+
+		client->browser->send_process_message(client->browser, PID_RENDERER, message);
+	} else {
+		fprintf(stderr, "Received unknown command: %s\n", cmd->commandName);
+		printf("ok\n");
+		printf("0\n");
+		fflush(stdout);
 	}
 }
 
@@ -225,4 +268,22 @@ int main(int argc, char** argv) {
 static void ready() {
     printf("Ready\n");
     fflush(stdout);
+}
+
+static cef_string_t *m_capybaraJavascript = NULL;
+
+static
+cef_string_t *
+loadJavascript() {
+	if (m_capybaraJavascript != NULL)
+		return m_capybaraJavascript;
+
+	extern char _binary_src_capybara_js_start;
+	extern char _binary_src_capybara_js_end;
+
+	int size = (char *)&_binary_src_capybara_js_end - (char *)&_binary_src_capybara_js_start;
+
+	m_capybaraJavascript = calloc(1, sizeof(cef_string_t));
+	cef_string_utf8_to_utf16(&_binary_src_capybara_js_start, size, m_capybaraJavascript);
+	return m_capybaraJavascript;
 }

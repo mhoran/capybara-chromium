@@ -7,6 +7,8 @@
 #include "cef_base.h"
 #include "include/capi/cef_app_capi.h"
 
+#include "cef_render_process_handler.h"
+
 // ----------------------------------------------------------------------------
 // cef_app_t
 // ----------------------------------------------------------------------------
@@ -74,7 +76,25 @@ struct _cef_browser_process_handler_t*
 struct _cef_render_process_handler_t*
         CEF_CALLBACK get_render_process_handler(struct _cef_app_t* self) {
     DEBUG_CALLBACK("get_render_process_handler\n");
-    return NULL;
+
+    cef_render_process_handler_t *handler;
+    handler = calloc(1, sizeof(cef_render_process_handler_t));
+
+    handler->base.size = sizeof(cef_render_process_handler_t);
+    initialize_cef_base((cef_base_t*)handler);
+    handler->on_render_thread_created = on_render_thread_created;
+    handler->on_web_kit_initialized = on_web_kit_initialized;
+    handler->on_browser_created = on_browser_created;
+    handler->on_browser_destroyed = on_browser_destroyed;
+    handler->get_load_handler = get_render_process_load_handler;
+    handler->on_before_navigation = on_before_navigation;
+    handler->on_context_created = on_context_created;
+    handler->on_context_released = on_context_released;
+    handler->on_uncaught_exception = on_uncaught_exception;
+    handler->on_focused_node_changed = on_focused_node_changed;
+    handler->on_process_message_received = on_render_process_message_received;
+
+    return handler;
 }
 
 void initialize_app_handler(cef_app_t* app) {
