@@ -147,11 +147,13 @@ void
 CEF_CALLBACK
 handle_invocation_result(struct _cef_v8value_t* object)
 {
-	cef_string_t *value = object->get_string_value(object);
+	cef_string_userfree_t value = object->get_string_value(object);
 
 	cef_string_utf8_t out = {};
-	if (value != NULL)
+	if (value != NULL) {
 		cef_string_utf16_to_utf8(value->str, value->length, &out);
+		cef_string_userfree_free(value);
+	}
 
 	printf("ok\n");
 	if (out.length > 0) {
@@ -159,6 +161,7 @@ handle_invocation_result(struct _cef_v8value_t* object)
 		printf("%s", out.str);
 	} else
 		printf("0\n");
+	cef_string_utf8_clear(&out);
 
 	fflush(stdout);
 };
@@ -175,9 +178,11 @@ on_render_process_message_received(
     struct _cef_browser_t* browser, cef_process_id_t source_process,
     struct _cef_process_message_t* message)
 {
-	cef_string_t *name = message->get_name(message);
+	int success;
+	cef_string_userfree_t name = message->get_name(message);
 	cef_string_utf8_t out = {};
 	cef_string_utf16_to_utf8(name->str, name->length, &out);
+	cef_string_userfree_free(name);
 	if (strcmp(out.str, "CapybaraInvocation") == 0) {
 		cef_list_value_t *arguments = message->get_argument_list(message);
 
@@ -187,7 +192,10 @@ on_render_process_message_received(
 
 		cef_v8value_t *invocation = cef_v8value_create_object(NULL);
 
-		cef_v8value_t *function_name = cef_v8value_create_string(arguments->get_string(arguments, 0));
+		cef_string_userfree_t s;
+		s = arguments->get_string(arguments, 0);
+		cef_v8value_t *function_name = cef_v8value_create_string(s);
+		cef_string_userfree_free(s);
 		cef_string_t key = {};
 		cef_string_set(u"functionName", 12, &key, 0);
 		invocation->set_value_bykey(invocation, &key, function_name, V8_PROPERTY_ATTRIBUTE_NONE);
@@ -197,7 +205,9 @@ on_render_process_message_received(
 		invocation->set_value_bykey(invocation, &key, allow_unattached, V8_PROPERTY_ATTRIBUTE_NONE);
 
 		cef_v8value_t *invocation_arguments = cef_v8value_create_array(1);
-		cef_v8value_t *argument = cef_v8value_create_string(arguments->get_string(arguments, 2));
+		s = arguments->get_string(arguments, 2);
+		cef_v8value_t *argument = cef_v8value_create_string(s);
+		cef_string_userfree_free(s);
 		invocation_arguments->set_value_byindex(invocation_arguments, 0, argument);
 
 		cef_string_set(u"arguments", 9, &key, 0);
@@ -208,17 +218,21 @@ on_render_process_message_received(
 		cef_string_set(u"CapybaraInvocation", 18, &key, 0);
 		object->set_value_bykey(object, &key, invocation, V8_PROPERTY_ATTRIBUTE_NONE);
 
-		cef_string_set(u"Capybara.invoke()", 17, &key, 0);
+		cef_string_t script = {};
+		cef_string_set(u"Capybara.invoke()", 17, &script, 0);
 
 		cef_v8value_t *retval = NULL;
 		cef_v8exception_t *exception = NULL;
-		if (context->eval(context, &key, &retval, &exception))
+		if (context->eval(context, &script, &retval, &exception))
 			handle_invocation_result(retval);
 
 		context->exit(context);
 
-		return 1;
+		success = 1;
 	} else {
-		return 0;
+		success = 0;
 	}
+	cef_string_utf8_clear(&out);
+
+	return success;
 };
