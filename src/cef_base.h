@@ -13,6 +13,7 @@
 #include "cef_life_span_handler.h"
 #include "cef_render_handler.h"
 #include "cef_load_handler.h"
+#include "string_visitor.h"
 #include "client.h"
 
 // Set to 1 to check if add_ref() and release()
@@ -76,6 +77,7 @@ ADD_REF(client_t)
 ADD_REF(render_process_handler)
 ADD_REF(load_handler)
 ADD_REF(render_handler)
+ADD_REF(string_visitor)
 
 #define RELEASE(type) \
 int \
@@ -93,6 +95,7 @@ RELEASE(client_t)
 RELEASE(render_process_handler)
 RELEASE(load_handler)
 RELEASE(render_handler)
+RELEASE(string_visitor)
 
 #define HAS_ONE_REF(type) \
 int \
@@ -106,6 +109,7 @@ HAS_ONE_REF(client_t)
 HAS_ONE_REF(render_process_handler)
 HAS_ONE_REF(load_handler)
 HAS_ONE_REF(render_handler)
+HAS_ONE_REF(string_visitor)
 
 void
 _initialize_cef_base(cef_base_t* base,
@@ -133,4 +137,5 @@ _initialize_cef_base((cef_base_t *)base, type##_add_ref, type##_release, type##_
 	render_process_handler*: INITIALIZE_CEF_BASE_FOR_TYPE(render_process_handler, T), \
 	load_handler*: INITIALIZE_CEF_BASE_FOR_TYPE(load_handler, T), \
 	render_handler*: INITIALIZE_CEF_BASE_FOR_TYPE(render_handler, T), \
+	string_visitor*: INITIALIZE_CEF_BASE_FOR_TYPE(string_visitor, T), \
 	default: _initialize_cef_base((cef_base_t *)T, add_ref, release, has_one_ref))

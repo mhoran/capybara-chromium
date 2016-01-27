@@ -48,11 +48,13 @@ startCommand(ReceivedCommand *cmd, Context *context)
 		frame->load_url(frame, &url);
 		cef_string_clear(&url);
 	} else if (strcmp(cmd->commandName, "Body") == 0) {
-		cef_string_visitor_t *visitor;
-		visitor = calloc(1, sizeof(cef_string_visitor_t));
-		visitor->base.size = sizeof(cef_string_visitor_t);
-		initialize_cef_base((cef_base_t*)visitor);
+		string_visitor *v;
+		v = calloc(1, sizeof(string_visitor));
+		cef_string_visitor_t *visitor = (cef_string_visitor_t *)v;
+		visitor->base.size = sizeof(string_visitor);
+		initialize_cef_base(v);
 		visitor->visit = get_frame_source;
+		visitor->base.add_ref((cef_base_t *)v);
 		cef_frame_t *frame = context->browser->get_main_frame(context->browser);
 		frame->get_source(frame, visitor);
 	} else if (strcmp(cmd->commandName, "FindCss") == 0 ) {
