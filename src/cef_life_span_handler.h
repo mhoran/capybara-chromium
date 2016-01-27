@@ -13,6 +13,7 @@ typedef struct {
 	cef_client_t client;
 	cef_browser_t *browser;
 	void (*on_load_end)();
+	atomic_int ref_count;
 } client_t;
 
 typedef struct {

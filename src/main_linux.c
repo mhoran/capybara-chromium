@@ -243,18 +243,18 @@ int main(int argc, char** argv) {
     // cef_client_t structure must be filled. It must implement
     // reference counting. You cannot pass a structure 
     // initialized with zeroes.
-    client_t client = {};
-    client.browser = NULL;
-    client.on_load_end = NULL;
-    initialize_client_handler((cef_client_t *)&client);
+    client_t c = {};
+    initialize_client_handler(&c);
 
     // Create browser.
     fprintf(stderr, "cef_browser_host_create_browser\n");
-    cef_browser_host_create_browser(&windowInfo, (cef_client_t *)&client, NULL,
+    cef_client_t *client = (cef_client_t *)&c;
+    client->base.add_ref((cef_base_t *)client);
+    cef_browser_host_create_browser(&windowInfo, client, NULL,
             &browserSettings, NULL);
 
     pthread_t pth;
-    pthread_create(&pth, NULL, f, &client);
+    pthread_create(&pth, NULL, f, &c);
 
     // Message loop.
     fprintf(stderr, "cef_run_message_loop\n");

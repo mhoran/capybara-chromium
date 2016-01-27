@@ -68,6 +68,7 @@ type##_add_ref(cef_base_t *self) \
 	atomic_fetch_add(&handler->ref_count, 1); \
 }
 ADD_REF(life_span_handler_t)
+ADD_REF(client_t)
 
 #define RELEASE(type) \
 int \
@@ -81,6 +82,7 @@ type##_release(cef_base_t* self) { \
 	return 0; \
 }
 RELEASE(life_span_handler_t)
+RELEASE(client_t)
 
 #define HAS_ONE_REF(type) \
 int \
@@ -90,6 +92,7 @@ type##_has_one_ref(cef_base_t* self) { \
 	return atomic_load(&handler->ref_count) == 1; \
 }
 HAS_ONE_REF(life_span_handler_t)
+HAS_ONE_REF(client_t)
 
 void
 _initialize_cef_base(cef_base_t* base,
@@ -113,4 +116,5 @@ _initialize_cef_base((cef_base_t *)base, type##_add_ref, type##_release, type##_
 #define initialize_cef_base(T) \
     _Generic((T), \
 	life_span_handler_t*: INITIALIZE_CEF_BASE_FOR_TYPE(life_span_handler_t, T), \
+	client_t*: INITIALIZE_CEF_BASE_FOR_TYPE(client_t, T), \
 	default: _initialize_cef_base((cef_base_t *)T, add_ref, release, has_one_ref))
