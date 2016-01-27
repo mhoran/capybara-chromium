@@ -2,6 +2,11 @@
 
 #include "include/capi/cef_render_handler_capi.h"
 
+typedef struct {
+	cef_render_handler_t handler;
+	atomic_int ref_count;
+} render_handler;
+
 ///
 // Implement this structure to handle events when window rendering is disabled.
 // The functions of this structure will be called on the UI thread.

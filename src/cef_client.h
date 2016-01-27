@@ -165,11 +165,13 @@ struct _cef_render_handler_t* CEF_CALLBACK get_render_handler(
     DEBUG_CALLBACK("get_render_handler\n");
 
 #ifdef WINDOWLESS
-    cef_render_handler_t *handler;
-    handler = calloc(1, sizeof(cef_render_handler_t));
+    render_handler *h;
+    h = calloc(1, sizeof(render_handler));
 
-    handler->base.size = sizeof(cef_render_handler_t);
-    initialize_cef_base((cef_base_t*)handler);
+    cef_render_handler_t *handler = (cef_render_handler_t *)h;
+    handler->base.size = sizeof(render_handler);
+    initialize_cef_base(h);
+
     handler->get_root_screen_rect = get_root_screen_rect;
     handler->get_screen_info = get_screen_info;
     handler->get_screen_point = get_screen_point;
@@ -181,6 +183,8 @@ struct _cef_render_handler_t* CEF_CALLBACK get_render_handler(
     handler->on_scroll_offset_changed = on_scroll_offset_changed;
     handler->start_dragging = start_dragging;
     handler->update_drag_cursor = update_drag_cursor;
+
+    handler->base.add_ref((cef_base_t *)h);
 
     return handler;
 #else
