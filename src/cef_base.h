@@ -9,6 +9,7 @@
 #include "include/capi/cef_base_capi.h"
 #include "include/capi/cef_app_capi.h"
 
+#include "cef_render_process_handler.h"
 #include "cef_life_span_handler.h"
 #include "client.h"
 
@@ -70,6 +71,7 @@ type##_add_ref(cef_base_t *self) \
 }
 ADD_REF(life_span_handler_t)
 ADD_REF(client_t)
+ADD_REF(render_process_handler)
 
 #define RELEASE(type) \
 int \
@@ -84,6 +86,7 @@ type##_release(cef_base_t* self) { \
 }
 RELEASE(life_span_handler_t)
 RELEASE(client_t)
+RELEASE(render_process_handler)
 
 #define HAS_ONE_REF(type) \
 int \
@@ -94,6 +97,7 @@ type##_has_one_ref(cef_base_t* self) { \
 }
 HAS_ONE_REF(life_span_handler_t)
 HAS_ONE_REF(client_t)
+HAS_ONE_REF(render_process_handler)
 
 void
 _initialize_cef_base(cef_base_t* base,
@@ -118,4 +122,5 @@ _initialize_cef_base((cef_base_t *)base, type##_add_ref, type##_release, type##_
     _Generic((T), \
 	life_span_handler_t*: INITIALIZE_CEF_BASE_FOR_TYPE(life_span_handler_t, T), \
 	client_t*: INITIALIZE_CEF_BASE_FOR_TYPE(client_t, T), \
+	render_process_handler*: INITIALIZE_CEF_BASE_FOR_TYPE(render_process_handler, T), \
 	default: _initialize_cef_base((cef_base_t *)T, add_ref, release, has_one_ref))

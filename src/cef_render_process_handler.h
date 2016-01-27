@@ -2,6 +2,11 @@
 
 #include "include/capi/cef_render_process_handler_capi.h"
 
+typedef struct {
+	cef_render_process_handler_t handler;
+	atomic_int ref_count;
+} render_process_handler ;
+
 ///
 // Structure used to implement render process callbacks. The functions of this
 // structure will be called on the render process main thread (TID_RENDERER)
