@@ -120,7 +120,7 @@ struct _cef_life_span_handler_t* CEF_CALLBACK get_life_span_handler(
     cef_life_span_handler_t *handler = &h->handler;
 
     handler->base.size = sizeof(life_span_handler_t);
-    initialize_cef_base((cef_base_t*)handler);
+    initialize_cef_base(h);
     handler->on_before_popup = on_before_popup;
     handler->on_after_created = on_after_created;
     handler->run_modal = run_modal;

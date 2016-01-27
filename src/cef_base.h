@@ -4,7 +4,12 @@
 
 #pragma once
 
+#include <stdatomic.h>
+
 #include "include/capi/cef_base_capi.h"
+#include "include/capi/cef_app_capi.h"
+
+#include "cef_life_span_handler.h"
 
 // Set to 1 to check if add_ref() and release()
 // are called and to track the total number of calls.
@@ -54,19 +59,58 @@ int CEF_CALLBACK has_one_ref(cef_base_t* self) {
     return 1;
 }
 
-void initialize_cef_base(cef_base_t* base) {
-    fprintf(stderr, "initialize_cef_base\n");
-    // Check if "size" member was set.
-    size_t size = base->size;
-    // Let's print the size in case sizeof was used
-    // on a pointer instead of a structure. In such
-    // case the number will be very high.
-    fprintf(stderr, "cef_base_t.size = %lu\n", (unsigned long)size);
-    if (size <= 0) {
-        fprintf(stderr, "FATAL: initialize_cef_base failed, size member not set\n");
-        exit(1);
-    }
-    base->add_ref = add_ref;
-    base->release = release;
-    base->has_one_ref = has_one_ref;
+#define ADD_REF(type) \
+void \
+CEF_CALLBACK \
+type##_add_ref(cef_base_t *self) \
+{ \
+	type *handler = (type *)self; \
+	atomic_fetch_add(&handler->ref_count, 1); \
 }
+ADD_REF(life_span_handler_t)
+
+#define RELEASE(type) \
+int \
+CEF_CALLBACK \
+type##_release(cef_base_t* self) { \
+	type *handler = (type *)self; \
+	if (atomic_fetch_sub(&handler->ref_count, 1) - 1 == 0) { \
+		free(handler); \
+		return 1; \
+	} \
+	return 0; \
+}
+RELEASE(life_span_handler_t)
+
+#define HAS_ONE_REF(type) \
+int \
+CEF_CALLBACK \
+type##_has_one_ref(cef_base_t* self) { \
+	type *handler = (type *)self; \
+	return atomic_load(&handler->ref_count) == 1; \
+}
+HAS_ONE_REF(life_span_handler_t)
+
+void
+_initialize_cef_base(cef_base_t* base,
+    void (CEF_CALLBACK *add_ref)(struct _cef_base_t* self),
+    int (CEF_CALLBACK *release)(struct _cef_base_t* self),
+    int (CEF_CALLBACK *has_one_ref)(struct _cef_base_t* self))
+{
+	size_t size = base->size;
+	if (size <= 0) {
+		fprintf(stderr, "FATAL: initialize_cef_base failed, size member not set\n");
+		exit(1);
+	}
+	base->add_ref = add_ref;
+	base->release = release;
+	base->has_one_ref = has_one_ref;
+}
+
+#define INITIALIZE_CEF_BASE_FOR_TYPE(type, base) \
+_initialize_cef_base((cef_base_t *)base, type##_add_ref, type##_release, type##_has_one_ref)
+
+#define initialize_cef_base(T) \
+    _Generic((T), \
+	life_span_handler_t*: INITIALIZE_CEF_BASE_FOR_TYPE(life_span_handler_t, T), \
+	default: _initialize_cef_base((cef_base_t *)T, add_ref, release, has_one_ref))

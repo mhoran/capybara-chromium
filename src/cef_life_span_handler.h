@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <stdatomic.h>
+
 #include "include/capi/cef_client_capi.h"
 #include "include/capi/cef_life_span_handler_capi.h"
 
@@ -16,6 +18,7 @@ typedef struct {
 typedef struct {
 	cef_life_span_handler_t handler;
 	client_t *client;
+	atomic_int ref_count;
 } life_span_handler_t;
 
 static void ready();
