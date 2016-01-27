@@ -6,7 +6,6 @@
 
 #include "cef_base.h"
 #include "cef_life_span_handler.h"
-#include "cef_load_handler.h"
 #include "cef_render_handler.h"
 #include "context.h"
 
@@ -147,11 +146,13 @@ struct _cef_load_handler_t* CEF_CALLBACK get_load_handler(
     cef_load_handler_t *handler = &h->handler;
 
     handler->base.size = sizeof(load_handler);
-    initialize_cef_base((cef_base_t*)handler);
+    initialize_cef_base(h);
     handler->on_loading_state_change = on_loading_state_change;
     handler->on_load_start = on_load_start;
     handler->on_load_end = on_load_end;
     handler->on_load_error = on_load_error;
+
+    handler->base.add_ref((cef_base_t *)h);
 
     return handler;
 }

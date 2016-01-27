@@ -4,12 +4,12 @@
 #include "include/capi/cef_browser_capi.h"
 #include "include/capi/cef_frame_capi.h"
 
-#include "cef_client.h"
 #include "context.h"
 
 typedef struct {
 	cef_load_handler_t handler;
 	Context *context;
+	atomic_int ref_count;
 } load_handler;
 
 ///
