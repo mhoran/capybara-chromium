@@ -128,7 +128,9 @@ struct _cef_life_span_handler_t* CEF_CALLBACK get_life_span_handler(
     handler->do_close = do_close;
     handler->on_before_close = on_before_close;
 
-    return ((cef_life_span_handler_t *)h);
+    handler->base.add_ref((cef_base_t *)h);
+
+    return handler;
 }
 
 ///
