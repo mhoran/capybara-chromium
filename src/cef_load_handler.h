@@ -3,7 +3,14 @@
 #include "include/capi/cef_base_capi.h"
 #include "include/capi/cef_browser_capi.h"
 #include "include/capi/cef_frame_capi.h"
+
 #include "cef_client.h"
+#include "context.h"
+
+typedef struct {
+	cef_load_handler_t handler;
+	Context *context;
+} load_handler;
 
 ///
 // Implement this structure to handle events related to browser load status. The
@@ -33,11 +40,6 @@ void CEF_CALLBACK on_loading_state_change(struct _cef_load_handler_t* self,
 void CEF_CALLBACK on_load_start(struct _cef_load_handler_t* self,
     struct _cef_browser_t* browser, struct _cef_frame_t* frame) {}
 
-typedef struct {
-	cef_load_handler_t handler;
-	client_t *client;
-} load_handler;
-
 ///
 // Called when the browser is done loading a frame. The |frame| value will
 // never be NULL -- call the is_main() function to check if this frame is the
@@ -52,8 +54,8 @@ void CEF_CALLBACK on_load_end(struct _cef_load_handler_t* self,
 {
 	load_handler *handler;
 	handler = (load_handler *)self;
-	if (handler->client->on_load_end != NULL)
-		handler->client->on_load_end();
+	if (handler->context->on_load_end != NULL)
+		handler->context->on_load_end();
 }
 
 ///

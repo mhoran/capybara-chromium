@@ -8,6 +8,7 @@
 #include "cef_life_span_handler.h"
 #include "cef_load_handler.h"
 #include "cef_render_handler.h"
+#include "context.h"
 
 #include "include/capi/cef_client_capi.h"
 
@@ -116,7 +117,7 @@ struct _cef_life_span_handler_t* CEF_CALLBACK get_life_span_handler(
     life_span_handler_t *h;
     h = calloc(1, sizeof(life_span_handler_t));
 
-    h->client = (client_t *)self;
+    h->context = ((client_t *)self)->context;
     cef_life_span_handler_t *handler = &h->handler;
 
     handler->base.size = sizeof(life_span_handler_t);
@@ -140,7 +141,7 @@ struct _cef_load_handler_t* CEF_CALLBACK get_load_handler(
     load_handler *h;
     h = calloc(1, sizeof(load_handler));
 
-    h->client = (client_t *)self;
+    h->context = ((client_t *)self)->context;
     cef_load_handler_t *handler = &h->handler;
 
     handler->base.size = sizeof(load_handler);

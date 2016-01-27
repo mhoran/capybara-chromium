@@ -10,6 +10,7 @@
 #include "include/capi/cef_app_capi.h"
 
 #include "cef_life_span_handler.h"
+#include "client.h"
 
 // Set to 1 to check if add_ref() and release()
 // are called and to track the total number of calls.

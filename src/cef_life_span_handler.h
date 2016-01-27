@@ -9,16 +9,11 @@
 #include "include/capi/cef_client_capi.h"
 #include "include/capi/cef_life_span_handler_capi.h"
 
-typedef struct {
-	cef_client_t client;
-	cef_browser_t *browser;
-	void (*on_load_end)();
-	atomic_int ref_count;
-} client_t;
+#include "context.h"
 
 typedef struct {
 	cef_life_span_handler_t handler;
-	client_t *client;
+	Context *context;
 	atomic_int ref_count;
 } life_span_handler_t;
 
@@ -57,7 +52,7 @@ int CEF_CALLBACK on_before_popup(struct _cef_life_span_handler_t* self,
 void CEF_CALLBACK on_after_created(struct _cef_life_span_handler_t* self,
     struct _cef_browser_t* browser) {
     	life_span_handler_t *handler = (life_span_handler_t *)self;
-    	handler->client->browser = browser;
+	handler->context->browser = browser;
 	ready();
 }
 

@@ -17,9 +17,6 @@
 #endif
 #include "cef_app.h"
 #include "cef_client.h"
-#include "cef_life_span_handler.h"
-#include "cef_load_handler.h"
-#include "cef_render_handler.h"
 
 typedef struct {
 	int argumentsExpected;
@@ -47,13 +44,13 @@ handle_load_event()
 }
 
 void
-startCommand(ReceivedCommand *cmd, client_t *client)
+startCommand(ReceivedCommand *cmd, Context *context)
 {
 	if (strcmp(cmd->commandName, "Visit") == 0) {
 		cef_string_t url = {};
 		cef_string_utf8_to_utf16(cmd->arguments[0], strlen(cmd->arguments[0]), &url);
-		cef_frame_t *frame = client->browser->get_main_frame(client->browser);
-		client->on_load_end = handle_load_event;
+		cef_frame_t *frame = context->browser->get_main_frame(context->browser);
+		context->on_load_end = handle_load_event;
 		frame->load_url(frame, &url);
 		cef_string_clear(&url);
 	} else if (strcmp(cmd->commandName, "Body") == 0) {
@@ -62,7 +59,7 @@ startCommand(ReceivedCommand *cmd, client_t *client)
 		visitor->base.size = sizeof(cef_string_visitor_t);
 		initialize_cef_base((cef_base_t*)visitor);
 		visitor->visit = get_frame_source;
-		cef_frame_t *frame = client->browser->get_main_frame(client->browser);
+		cef_frame_t *frame = context->browser->get_main_frame(context->browser);
 		frame->get_source(frame, visitor);
 	} else if (strcmp(cmd->commandName, "FindCss") == 0 ) {
 		fprintf(stderr, "Received FindCss\n");
@@ -82,7 +79,7 @@ startCommand(ReceivedCommand *cmd, client_t *client)
 		args->set_string(args, 2, &value);
 		cef_string_clear(&value);
 
-		client->browser->send_process_message(client->browser, PID_RENDERER, message);
+		context->browser->send_process_message(context->browser, PID_RENDERER, message);
 	} else if (strcmp(cmd->commandName, "Node") == 0 ) {
 		fprintf(stderr, "Received Node\n");
 		cef_string_t name = {};
@@ -101,7 +98,7 @@ startCommand(ReceivedCommand *cmd, client_t *client)
 		args->set_string(args, 2, &value);
 		cef_string_clear(&value);
 
-		client->browser->send_process_message(client->browser, PID_RENDERER, message);
+		context->browser->send_process_message(context->browser, PID_RENDERER, message);
 	} else {
 		fprintf(stderr, "Received unknown command: %s\n", cmd->commandName);
 		printf("ok\n");
@@ -171,7 +168,7 @@ checkNext(ReceivedCommand *cmd, int *expectingDataSize, int *argument_index)
 }
 
 void *f(void *arg) {
-	client_t *client = (client_t *)arg;
+	Context *context = (Context *)arg;
 	while (!feof(stdin)) {
 		ReceivedCommand *cmd;
 		cmd = calloc(1, sizeof(ReceivedCommand));
@@ -183,10 +180,10 @@ void *f(void *arg) {
 		checkNext(cmd, &expectingDataSize, &argument_index);
 
 		if (argument_index == cmd->argumentsExpected)
-			startCommand(cmd, client);
+			startCommand(cmd, context);
 	}
 
-	cef_browser_host_t *host = client->browser->get_host(client->browser);
+	cef_browser_host_t *host = context->browser->get_host(context->browser);
 	host->close_browser(host, 1);
 
 	return NULL;
@@ -244,6 +241,8 @@ int main(int argc, char** argv) {
     // reference counting. You cannot pass a structure 
     // initialized with zeroes.
     client_t c = {};
+    Context context = {};
+    c.context = &context;
     initialize_client_handler(&c);
 
     // Create browser.
@@ -254,7 +253,7 @@ int main(int argc, char** argv) {
             &browserSettings, NULL);
 
     pthread_t pth;
-    pthread_create(&pth, NULL, f, &c);
+    pthread_create(&pth, NULL, f, &context);
 
     // Message loop.
     fprintf(stderr, "cef_run_message_loop\n");
