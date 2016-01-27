@@ -9,12 +9,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-#ifndef WINDOWLESS
-
-#include <gdk/gdkx.h>
-
-#include "gtk.h"
-#endif
 #include "cef_app.h"
 #include "cef_client.h"
 
@@ -220,14 +214,7 @@ int main(int argc, char** argv) {
     cef_initialize(&mainArgs, &settings, &app, NULL);
 
     cef_window_info_t windowInfo = {};
-#ifndef WINDOWLESS
-    // Create GTK window. You can pass a NULL handle 
-    // to CEF and then it will create a window of its own.
-    initialize_gtk();
-    GtkWidget* hwnd = create_gtk_window("cefcapi example", 1024, 768);
-    windowInfo.parent_window = gdk_x11_drawable_get_xid(gtk_widget_get_window(hwnd));
-    // windowInfo.parent_window = hwnd;
-#else
+#ifdef WINDOWLESS
     windowInfo.windowless_rendering_enabled = 1;
 #endif
     
