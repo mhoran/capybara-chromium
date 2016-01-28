@@ -25,13 +25,9 @@ typedef struct {
 
 void CEF_CALLBACK get_frame_source(struct _cef_string_visitor_t* self,
     const cef_string_t* string) {
-	printf("ok\n");
-	cef_string_utf8_t out = {};
-	cef_string_utf16_to_utf8(string->str, string->length, &out);
-	printf("%zu\n", out.length);
-	printf("%s", out.str);
-	cef_string_utf8_clear(&out);
-	fflush(stdout);
+	cef_string_userfree_utf8_t out = cef_string_userfree_utf8_alloc();
+	cef_string_utf16_to_utf8(string->str, string->length, out);
+	((string_visitor *)self)->context->finish(out);
 }
 
 void
@@ -57,6 +53,7 @@ startCommand(ReceivedCommand *cmd, Context *context)
 		v = calloc(1, sizeof(string_visitor));
 		cef_string_visitor_t *visitor = (cef_string_visitor_t *)v;
 		initialize_cef_base(v);
+		v->context = context;
 		visitor->visit = get_frame_source;
 		visitor->base.add_ref((cef_base_t *)v);
 		cef_frame_t *frame = context->browser->get_main_frame(context->browser);
@@ -241,6 +238,7 @@ int main(int argc, char** argv) {
     // initialized with zeroes.
     client_t c = {};
     Context context = {};
+    initialize_context(&context);
     c.context = &context;
     initialize_client_handler(&c);
 
