@@ -265,10 +265,10 @@ void ready() {
     fflush(stdout);
 }
 
-static cef_string_t *m_capybaraJavascript = NULL;
-
 cef_string_t *
 loadJavascript() {
+	static cef_string_t *m_capybaraJavascript = NULL;
+
 	if (m_capybaraJavascript != NULL)
 		return m_capybaraJavascript;
 
