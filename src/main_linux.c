@@ -11,6 +11,11 @@
 
 #include "cef_app.h"
 #include "cef_client.h"
+#include "cef_base.h"
+#include "string_visitor.h"
+
+IMPLEMENT_REFCOUNTING(string_visitor)
+GENERATE_CEF_BASE_INITIALIZER(string_visitor)
 
 typedef struct {
 	int argumentsExpected;
@@ -27,7 +32,7 @@ void CEF_CALLBACK get_frame_source(struct _cef_string_visitor_t* self,
 	printf("%s", out.str);
 	cef_string_utf8_clear(&out);
 	fflush(stdout);
-};
+}
 
 void
 handle_load_event()
@@ -255,14 +260,13 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-static void ready() {
+void ready() {
     printf("Ready\n");
     fflush(stdout);
 }
 
 static cef_string_t *m_capybaraJavascript = NULL;
 
-static
 cef_string_t *
 loadJavascript() {
 	if (m_capybaraJavascript != NULL)

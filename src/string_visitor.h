@@ -1,6 +1,6 @@
 #pragma once
 
-typedef struct {
+typedef struct _string_visitor {
 	cef_string_visitor_t visitor;
 	atomic_int ref_count;
 } string_visitor;

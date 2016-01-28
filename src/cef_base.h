@@ -4,22 +4,12 @@
 
 #pragma once
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdatomic.h>
 
 #include "include/capi/cef_base_capi.h"
 #include "include/capi/cef_app_capi.h"
-
-#include "cef_render_process_handler.h"
-#include "cef_life_span_handler.h"
-#include "cef_render_handler.h"
-#include "cef_load_handler.h"
-#include "string_visitor.h"
-#include "client.h"
-
-// Set to 1 to check if add_ref() and release()
-// are called and to track the total number of calls.
-// add_ref will be printed as "+", release as "-".
-#define DEBUG_REFERENCE_COUNTING 0
 
 // Print only the first execution of the callback,
 // ignore the subsequent.
@@ -37,105 +27,84 @@
 ///
 // Increment the reference count.
 ///
-void CEF_CALLBACK add_ref(cef_base_t* self) {
-    DEBUG_CALLBACK("cef_base_t.add_ref\n");
-    if (DEBUG_REFERENCE_COUNTING)
-        printf("+");
+#define ADD_REF(type) \
+static \
+void \
+CEF_CALLBACK \
+type##_add_ref(cef_base_t *self) \
+{ \
+	struct _##type *handler = (struct _##type *)self; \
+	atomic_fetch_add(&handler->ref_count, 1); \
 }
 
 ///
 // Decrement the reference count.  Delete this object when no references
 // remain.
 ///
-int CEF_CALLBACK release(cef_base_t* self) {
-    DEBUG_CALLBACK("cef_base_t.release\n");
-    if (DEBUG_REFERENCE_COUNTING)
-        printf("-");
-    return 1;
-}
-
-///
-// Returns the current number of references.
-///
-int CEF_CALLBACK has_one_ref(cef_base_t* self) {
-    DEBUG_CALLBACK("cef_base_t.get_refct\n");
-    if (DEBUG_REFERENCE_COUNTING)
-        printf("=");
-    return 1;
-}
-
-#define ADD_REF(type) \
-void \
-CEF_CALLBACK \
-type##_add_ref(cef_base_t *self) \
-{ \
-	type *handler = (type *)self; \
-	atomic_fetch_add(&handler->ref_count, 1); \
-}
-ADD_REF(life_span_handler_t)
-ADD_REF(client_t)
-ADD_REF(render_process_handler)
-ADD_REF(load_handler)
-ADD_REF(render_handler)
-ADD_REF(string_visitor)
-
 #define RELEASE(type) \
+static \
 int \
 CEF_CALLBACK \
 type##_release(cef_base_t* self) { \
-	type *handler = (type *)self; \
+	struct _##type *handler = (struct _##type *)self; \
 	if (atomic_fetch_sub(&handler->ref_count, 1) - 1 == 0) { \
 		free(handler); \
 		return 1; \
 	} \
 	return 0; \
 }
-RELEASE(life_span_handler_t)
-RELEASE(client_t)
-RELEASE(render_process_handler)
-RELEASE(load_handler)
-RELEASE(render_handler)
-RELEASE(string_visitor)
 
+///
+// Returns the current number of references.
+///
 #define HAS_ONE_REF(type) \
+static \
 int \
 CEF_CALLBACK \
 type##_has_one_ref(cef_base_t* self) { \
-	type *handler = (type *)self; \
+	struct _##type *handler = (struct _##type *)self; \
 	return atomic_load(&handler->ref_count) == 1; \
 }
-HAS_ONE_REF(life_span_handler_t)
-HAS_ONE_REF(client_t)
-HAS_ONE_REF(render_process_handler)
-HAS_ONE_REF(load_handler)
-HAS_ONE_REF(render_handler)
-HAS_ONE_REF(string_visitor)
 
-void
-_initialize_cef_base(cef_base_t* base,
-    void (CEF_CALLBACK *add_ref)(struct _cef_base_t* self),
-    int (CEF_CALLBACK *release)(struct _cef_base_t* self),
-    int (CEF_CALLBACK *has_one_ref)(struct _cef_base_t* self))
-{
-	size_t size = base->size;
-	if (size <= 0) {
-		fprintf(stderr, "FATAL: initialize_cef_base failed, size member not set\n");
-		exit(1);
-	}
-	base->add_ref = add_ref;
-	base->release = release;
-	base->has_one_ref = has_one_ref;
+#define IMPLEMENT_REFCOUNTING(type) \
+ADD_REF(type) \
+RELEASE(type) \
+HAS_ONE_REF(type)
+
+#define GENERATE_CEF_BASE_INITIALIZER(type) \
+void \
+initialize_##type##_base(type *object) \
+{ \
+	cef_base_t *base = (cef_base_t *)object; \
+	size_t size = base->size; \
+	if (size <= 0) { \
+		fprintf(stderr, "FATAL: initialize_cef_base failed, size member not set\n"); \
+		exit(1); \
+	} \
+	base->add_ref = type##_add_ref; \
+	base->release = type##_release; \
+	base->has_one_ref = type##_has_one_ref; \
 }
 
-#define INITIALIZE_CEF_BASE_FOR_TYPE(type, base) \
-_initialize_cef_base((cef_base_t *)base, type##_add_ref, type##_release, type##_has_one_ref)
+struct _life_span_handler_t;
+struct _client_t;
+struct _render_process_handler;
+struct _load_handler;
+struct _render_handler;
+struct _string_visitor;
+
+void initialize_life_span_handler_t_base(struct _life_span_handler_t *object);
+void initialize_client_t_base(struct _client_t *object);
+void initialize_render_process_handler_base(struct _render_process_handler *object);
+void initialize_load_handler_base(struct _load_handler *object);
+void initialize_render_handler_base(struct _render_handler *object);
+void initialize_string_visitor_base(struct _string_visitor *object);
 
 #define initialize_cef_base(T) \
     _Generic((T), \
-	life_span_handler_t*: INITIALIZE_CEF_BASE_FOR_TYPE(life_span_handler_t, T), \
-	client_t*: INITIALIZE_CEF_BASE_FOR_TYPE(client_t, T), \
-	render_process_handler*: INITIALIZE_CEF_BASE_FOR_TYPE(render_process_handler, T), \
-	load_handler*: INITIALIZE_CEF_BASE_FOR_TYPE(load_handler, T), \
-	render_handler*: INITIALIZE_CEF_BASE_FOR_TYPE(render_handler, T), \
-	string_visitor*: INITIALIZE_CEF_BASE_FOR_TYPE(string_visitor, T), \
-	default: _initialize_cef_base((cef_base_t *)T, add_ref, release, has_one_ref))
+	struct _life_span_handler_t*: initialize_life_span_handler_t_base, \
+	struct _client_t*: initialize_client_t_base, \
+	struct _render_process_handler*: initialize_render_process_handler_base, \
+	struct _load_handler*: initialize_load_handler_base, \
+	struct _render_handler*: initialize_render_handler_base, \
+	struct _string_visitor*: initialize_string_visitor_base)(T)
