@@ -13,9 +13,7 @@
 #include "cef_client.h"
 #include "cef_base.h"
 #include "string_visitor.h"
-
-IMPLEMENT_REFCOUNTING(string_visitor)
-GENERATE_CEF_BASE_INITIALIZER(string_visitor)
+#include "command.h"
 
 typedef struct {
 	int argumentsExpected;
@@ -23,85 +21,26 @@ typedef struct {
 	char **arguments;
 } ReceivedCommand;
 
-void CEF_CALLBACK get_frame_source(struct _cef_string_visitor_t* self,
-    const cef_string_t* string) {
-	cef_string_userfree_utf8_t out = cef_string_userfree_utf8_alloc();
-	cef_string_utf16_to_utf8(string->str, string->length, out);
-	((string_visitor *)self)->context->finish(out);
-}
-
-void
-handle_load_event()
-{
-	printf("ok\n");
-	printf("0\n");
-	fflush(stdout);
-}
-
 void
 startCommand(ReceivedCommand *cmd, Context *context)
 {
+	Command command = {};
 	if (strcmp(cmd->commandName, "Visit") == 0) {
-		cef_string_t url = {};
-		cef_string_utf8_to_utf16(cmd->arguments[0], strlen(cmd->arguments[0]), &url);
-		cef_frame_t *frame = context->browser->get_main_frame(context->browser);
-		context->on_load_end = handle_load_event;
-		frame->load_url(frame, &url);
-		cef_string_clear(&url);
+		initialize_visit_command(&command, cmd->arguments);
 	} else if (strcmp(cmd->commandName, "Body") == 0) {
-		string_visitor *v;
-		v = calloc(1, sizeof(string_visitor));
-		cef_string_visitor_t *visitor = (cef_string_visitor_t *)v;
-		initialize_cef_base(v);
-		v->context = context;
-		visitor->visit = get_frame_source;
-		visitor->base.add_ref((cef_base_t *)v);
-		cef_frame_t *frame = context->browser->get_main_frame(context->browser);
-		frame->get_source(frame, visitor);
+		initialize_body_command(&command, cmd->arguments);
 	} else if (strcmp(cmd->commandName, "FindCss") == 0 ) {
-		fprintf(stderr, "Received FindCss\n");
-		cef_string_t name = {};
-		cef_string_set(u"CapybaraInvocation", 18, &name, 0);
-		cef_process_message_t *message = cef_process_message_create(&name);
-
-		cef_list_value_t *args = message->get_argument_list(message);
-
-		cef_string_t value = {};
-		cef_string_set(u"findCss", 7, &value, 0);
-		args->set_string(args, 0, &value);
-
-		args->set_bool(args, 1, 1);
-
-		cef_string_utf8_to_utf16(cmd->arguments[0], strlen(cmd->arguments[0]), &value);
-		args->set_string(args, 2, &value);
-		cef_string_clear(&value);
-
-		context->browser->send_process_message(context->browser, PID_RENDERER, message);
+		initialize_find_css_command(&command, cmd->arguments);
 	} else if (strcmp(cmd->commandName, "Node") == 0 ) {
-		fprintf(stderr, "Received Node\n");
-		cef_string_t name = {};
-		cef_string_set(u"CapybaraInvocation", 18, &name, 0);
-		cef_process_message_t *message = cef_process_message_create(&name);
-
-		cef_list_value_t *args = message->get_argument_list(message);
-
-		cef_string_t value = {};
-		cef_string_utf8_to_utf16(cmd->arguments[0], strlen(cmd->arguments[0]), &value);
-		args->set_string(args, 0, &value);
-
-		args->set_bool(args, 1, strcmp(cmd->arguments[1], "true") == 0);
-
-		cef_string_utf8_to_utf16(cmd->arguments[2], strlen(cmd->arguments[2]), &value);
-		args->set_string(args, 2, &value);
-		cef_string_clear(&value);
-
-		context->browser->send_process_message(context->browser, PID_RENDERER, message);
+		initialize_node_command(&command, cmd->arguments);
 	} else {
 		fprintf(stderr, "Received unknown command: %s\n", cmd->commandName);
 		printf("ok\n");
 		printf("0\n");
 		fflush(stdout);
+		return;
 	}
+	command.run(&command, context);
 }
 
 void
