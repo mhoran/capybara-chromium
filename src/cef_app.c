@@ -9,6 +9,9 @@
 #include "cef_app.h"
 #include "cef_render_process_handler.h"
 
+IMPLEMENT_REFCOUNTING(app)
+GENERATE_CEF_BASE_INITIALIZER(app)
+
 // ----------------------------------------------------------------------------
 // cef_app_t
 // ----------------------------------------------------------------------------
@@ -99,20 +102,19 @@ struct _cef_render_process_handler_t*
     return handler;
 }
 
-static void add_ref(cef_base_t *base) { }
-static int release(cef_base_t *base) { return 1; }
-static int has_one_ref(cef_base_t *base) { return 1; }
-
-void initialize_app_handler(cef_app_t* app) {
-    fprintf(stderr, "initialize_app_handler\n");
-    app->base.size = sizeof(cef_app_t);
-    app->base.add_ref = add_ref;
-    app->base.release = release;
-    app->base.has_one_ref = has_one_ref;
+static
+void
+initialize_cef_app_handler(cef_app_t *app) {
     // callbacks
     app->on_before_command_line_processing = on_before_command_line_processing;
     app->on_register_custom_schemes = on_register_custom_schemes;
     app->get_resource_bundle_handler = get_resource_bundle_handler;
     app->get_browser_process_handler = get_browser_process_handler;
     app->get_render_process_handler = get_render_process_handler;
+}
+
+void initialize_app_handler(app* app) {
+    fprintf(stderr, "initialize_app_handler\n");
+    initialize_cef_base(app);
+    initialize_cef_app_handler((cef_app_t *)app);
 }

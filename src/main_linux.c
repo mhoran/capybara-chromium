@@ -199,12 +199,16 @@ int main(int argc, char** argv) {
     // cef_app_t structure must be filled. It must implement
     // reference counting. You cannot pass a structure 
     // initialized with zeroes.
-    cef_app_t app = {};
-    initialize_app_handler(&app);
+    app *a;
+    a = calloc(1, sizeof(app));
+    initialize_app_handler(a);
+    cef_app_t *app = (cef_app_t *)a;
+    app->base.add_ref((cef_base_t *)a);
     
     // Execute subprocesses.
     fprintf(stderr, "cef_execute_process, argc=%d\n", argc);
-    int code = cef_execute_process(&mainArgs, &app, NULL);
+    app->base.add_ref((cef_base_t *)a);
+    int code = cef_execute_process(&mainArgs, app, NULL);
     if (code >= 0) {
         _exit(code);
     }
@@ -217,7 +221,9 @@ int main(int argc, char** argv) {
 
     // Initialize CEF.
     fprintf(stderr, "cef_initialize\n");
-    cef_initialize(&mainArgs, &settings, &app, NULL);
+    app->base.add_ref((cef_base_t *)a);
+    cef_initialize(&mainArgs, &settings, app, NULL);
+    app->base.release((cef_base_t *)a);
 
     cef_window_info_t windowInfo = {};
 #ifdef WINDOWLESS

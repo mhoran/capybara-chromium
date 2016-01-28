@@ -88,6 +88,7 @@ struct _render_process_handler;
 struct _load_handler;
 struct _render_handler;
 struct _string_visitor;
+struct _app;
 
 void initialize_life_span_handler_t_base(struct _life_span_handler_t *object);
 void initialize_client_t_base(struct _client_t *object);
@@ -95,6 +96,7 @@ void initialize_render_process_handler_base(struct _render_process_handler *obje
 void initialize_load_handler_base(struct _load_handler *object);
 void initialize_render_handler_base(struct _render_handler *object);
 void initialize_string_visitor_base(struct _string_visitor *object);
+void initialize_app_base(struct _app *object);
 
 #define initialize_cef_base(T) \
     _Generic((T), \
@@ -103,4 +105,5 @@ void initialize_string_visitor_base(struct _string_visitor *object);
 	struct _render_process_handler*: initialize_render_process_handler_base, \
 	struct _load_handler*: initialize_load_handler_base, \
 	struct _render_handler*: initialize_render_handler_base, \
-	struct _string_visitor*: initialize_string_visitor_base)(T)
+	struct _string_visitor*: initialize_string_visitor_base, \
+	struct _app*: initialize_app_base)(T)
