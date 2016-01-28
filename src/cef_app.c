@@ -81,7 +81,6 @@ struct _cef_render_process_handler_t*
     h = calloc(1, sizeof(render_process_handler));
 
     cef_render_process_handler_t *handler = (cef_render_process_handler_t *)h;
-    handler->base.size = sizeof(render_process_handler);
     initialize_cef_base(h);
     handler->on_render_thread_created = on_render_thread_created;
     handler->on_web_kit_initialized = on_web_kit_initialized;

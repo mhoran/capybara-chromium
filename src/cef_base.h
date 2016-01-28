@@ -76,11 +76,7 @@ void \
 initialize_##type##_base(type *object) \
 { \
 	cef_base_t *base = (cef_base_t *)object; \
-	size_t size = base->size; \
-	if (size <= 0) { \
-		fprintf(stderr, "FATAL: initialize_cef_base failed, size member not set\n"); \
-		exit(1); \
-	} \
+	base->size = sizeof(type); \
 	base->add_ref = type##_add_ref; \
 	base->release = type##_release; \
 	base->has_one_ref = type##_has_one_ref; \

@@ -56,7 +56,6 @@ startCommand(ReceivedCommand *cmd, Context *context)
 		string_visitor *v;
 		v = calloc(1, sizeof(string_visitor));
 		cef_string_visitor_t *visitor = (cef_string_visitor_t *)v;
-		visitor->base.size = sizeof(string_visitor);
 		initialize_cef_base(v);
 		visitor->visit = get_frame_source;
 		visitor->base.add_ref((cef_base_t *)v);

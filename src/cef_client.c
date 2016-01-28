@@ -120,7 +120,6 @@ struct _cef_life_span_handler_t* CEF_CALLBACK get_life_span_handler(
     h->context = ((client_t *)self)->context;
     cef_life_span_handler_t *handler = &h->handler;
 
-    handler->base.size = sizeof(life_span_handler_t);
     initialize_cef_base(h);
     handler->on_before_popup = on_before_popup;
     handler->on_after_created = on_after_created;
@@ -146,7 +145,6 @@ struct _cef_load_handler_t* CEF_CALLBACK get_load_handler(
     h->context = ((client_t *)self)->context;
     cef_load_handler_t *handler = &h->handler;
 
-    handler->base.size = sizeof(load_handler);
     initialize_cef_base(h);
     handler->on_loading_state_change = on_loading_state_change;
     handler->on_load_start = on_load_start;
@@ -170,7 +168,6 @@ struct _cef_render_handler_t* CEF_CALLBACK get_render_handler(
     h = calloc(1, sizeof(render_handler));
 
     cef_render_handler_t *handler = (cef_render_handler_t *)h;
-    handler->base.size = sizeof(render_handler);
     initialize_cef_base(h);
 
     handler->get_root_screen_rect = get_root_screen_rect;
@@ -218,7 +215,6 @@ int CEF_CALLBACK on_process_message_received(
 void initialize_client_handler(client_t* c) {
     DEBUG_CALLBACK("initialize_client_handler\n");
     cef_client_t *client = (cef_client_t *)c;
-    client->base.size = sizeof(client_t);
     initialize_cef_base(c);
     // callbacks
     client->get_context_menu_handler = get_context_menu_handler;
