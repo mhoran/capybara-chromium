@@ -4,15 +4,7 @@
 #include "command.h"
 #include "string_visitor.h"
 #include "cef_base.h"
-
-static
-void
-handle_load_event()
-{
-	printf("ok\n");
-	printf("0\n");
-	fflush(stdout);
-}
+#include "context.h"
 
 static
 void
@@ -21,9 +13,9 @@ run_visit_command(Command *self, Context *context)
 	cef_string_t url = {};
 	cef_string_utf8_to_utf16(self->arguments[0], strlen(self->arguments[0]), &url);
 	cef_frame_t *frame = context->browser->get_main_frame(context->browser);
-	context->on_load_end = handle_load_event;
 	frame->load_url(frame, &url);
 	cef_string_clear(&url);
+	context->finish(context, NULL);
 }
 
 void
@@ -41,7 +33,8 @@ void CEF_CALLBACK get_frame_source(struct _cef_string_visitor_t* self,
     const cef_string_t* string) {
 	cef_string_userfree_utf8_t out = cef_string_userfree_utf8_alloc();
 	cef_string_utf16_to_utf8(string->str, string->length, out);
-	((string_visitor *)self)->context->finish(out);
+	Context *context = ((string_visitor *)self)->context;
+	context->finish(context, out);
 }
 
 static

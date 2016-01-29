@@ -104,7 +104,7 @@ checkNext(ReceivedCommand *cmd, int *expectingDataSize, int *argument_index)
 }
 
 void *f(void *arg) {
-	Context *context = (Context *)arg;
+	Context *context = arg;
 	while (!feof(stdin)) {
 		ReceivedCommand *cmd;
 		cmd = calloc(1, sizeof(ReceivedCommand));

@@ -1,8 +1,8 @@
-#include "context.h"
+struct _Context;
 
 typedef struct _Command {
 	char **arguments;
-	void (*run)(struct _Command *self, Context *context);
+	void (*run)(struct _Command *self, struct _Context *context);
 } Command;
 
 void initialize_visit_command(Command *command, char *arguments[]);

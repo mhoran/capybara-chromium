@@ -47,8 +47,7 @@ void CEF_CALLBACK on_load_end(struct _cef_load_handler_t* self,
 {
 	load_handler *handler;
 	handler = (load_handler *)self;
-	if (handler->context->on_load_end != NULL)
-		handler->context->on_load_end();
+	handler->context->on_load_end(handler->context);
 }
 
 ///
