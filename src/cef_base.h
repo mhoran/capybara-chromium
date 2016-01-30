@@ -1,7 +1,3 @@
-// Copyright (c) 2014 The cefcapi authors. All rights reserved.
-// License: BSD 3-clause.
-// Website: https://github.com/CzarekTomczak/cefcapi
-
 #pragma once
 
 #include <stdio.h>
@@ -10,14 +6,6 @@
 
 #include "include/capi/cef_base_capi.h"
 #include "include/capi/cef_app_capi.h"
-
-// Print only the first execution of the callback,
-// ignore the subsequent.
-#define DEBUG_CALLBACK(x) { static int first_call = 1; if (first_call == 1) { first_call = 0; fprintf(stderr, x); } }
-
-// ----------------------------------------------------------------------------
-// cef_base_t
-// ----------------------------------------------------------------------------
 
 ///
 // Structure defining the reference count implementation functions. All

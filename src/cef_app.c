@@ -34,9 +34,7 @@ GENERATE_CEF_BASE_INITIALIZER(app)
 ///
 void CEF_CALLBACK on_before_command_line_processing(
         struct _cef_app_t* self, const cef_string_t* process_type,
-        struct _cef_command_line_t* command_line) {
-    DEBUG_CALLBACK("on_before_command_line_processing\n");
-}
+        struct _cef_command_line_t* command_line) { }
 
 ///
 // Provides an opportunity to register custom schemes. Do not keep a reference
@@ -46,9 +44,7 @@ void CEF_CALLBACK on_before_command_line_processing(
 ///
 void CEF_CALLBACK on_register_custom_schemes(
         struct _cef_app_t* self,
-        struct _cef_scheme_registrar_t* registrar) {
-    DEBUG_CALLBACK("on_register_custom_schemes\n");
-}
+        struct _cef_scheme_registrar_t* registrar) { }
 
 ///
 // Return the handler for resource bundle events. If
@@ -58,7 +54,6 @@ void CEF_CALLBACK on_register_custom_schemes(
 ///
 struct _cef_resource_bundle_handler_t*
         CEF_CALLBACK get_resource_bundle_handler(struct _cef_app_t* self) {
-    DEBUG_CALLBACK("get_resource_bundle_handler\n");
     return NULL;
 }
 
@@ -68,7 +63,6 @@ struct _cef_resource_bundle_handler_t*
 ///
 struct _cef_browser_process_handler_t*
         CEF_CALLBACK get_browser_process_handler(struct _cef_app_t* self) {
-    DEBUG_CALLBACK("get_browser_process_handler\n");
     return NULL;
 }
 
@@ -78,7 +72,6 @@ struct _cef_browser_process_handler_t*
 ///
 struct _cef_render_process_handler_t*
         CEF_CALLBACK get_render_process_handler(struct _cef_app_t* self) {
-    DEBUG_CALLBACK("get_render_process_handler\n");
 
     render_process_handler *h;
     h = calloc(1, sizeof(render_process_handler));
