@@ -107,7 +107,6 @@ initialize_cef_app_handler(cef_app_t *app) {
 }
 
 void initialize_app_handler(app* app) {
-    fprintf(stderr, "initialize_app_handler\n");
     initialize_cef_base(app);
     initialize_cef_app_handler((cef_app_t *)app);
 }

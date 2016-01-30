@@ -142,7 +142,6 @@ int main(int argc, char** argv) {
     app->base.add_ref((cef_base_t *)a);
     
     // Execute subprocesses.
-    fprintf(stderr, "cef_execute_process, argc=%d\n", argc);
     app->base.add_ref((cef_base_t *)a);
     int code = cef_execute_process(&mainArgs, app, NULL);
     if (code >= 0) {
@@ -156,7 +155,6 @@ int main(int argc, char** argv) {
     settings.no_sandbox = 1;
 
     // Initialize CEF.
-    fprintf(stderr, "cef_initialize\n");
     app->base.add_ref((cef_base_t *)a);
     cef_initialize(&mainArgs, &settings, app, NULL);
     app->base.release((cef_base_t *)a);
@@ -182,7 +180,6 @@ int main(int argc, char** argv) {
     initialize_client_handler(&c);
 
     // Create browser.
-    fprintf(stderr, "cef_browser_host_create_browser\n");
     cef_client_t *client = (cef_client_t *)&c;
     client->base.add_ref((cef_base_t *)client);
     cef_browser_host_create_browser(&windowInfo, client, NULL,
@@ -192,11 +189,9 @@ int main(int argc, char** argv) {
     pthread_create(&pth, NULL, f, &context);
 
     // Message loop.
-    fprintf(stderr, "cef_run_message_loop\n");
     cef_run_message_loop();
 
     // Shutdown CEF.
-    fprintf(stderr, "cef_shutdown\n");
     cef_shutdown();
 
     return 0;
