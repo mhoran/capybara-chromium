@@ -9,8 +9,6 @@ typedef struct _render_process_handler {
 	atomic_int ref_count;
 } render_process_handler;
 
-cef_string_t * loadJavascript();
-
 void
 CEF_CALLBACK
 on_render_thread_created(

@@ -204,20 +204,3 @@ void ready() {
     printf("Ready\n");
     fflush(stdout);
 }
-
-cef_string_t *
-loadJavascript() {
-	static cef_string_t *m_capybaraJavascript = NULL;
-
-	if (m_capybaraJavascript != NULL)
-		return m_capybaraJavascript;
-
-	extern char _binary_src_capybara_js_start;
-	extern char _binary_src_capybara_js_end;
-
-	int size = (char *)&_binary_src_capybara_js_end - (char *)&_binary_src_capybara_js_start;
-
-	m_capybaraJavascript = calloc(1, sizeof(cef_string_t));
-	cef_string_utf8_to_utf16(&_binary_src_capybara_js_start, size, m_capybaraJavascript);
-	return m_capybaraJavascript;
-}
