@@ -9,3 +9,4 @@ void initialize_visit_command(Command *command, char *arguments[]);
 void initialize_body_command(Command *command, char *arguments[]);
 void initialize_find_css_command(Command *command, char *arguments[]);
 void initialize_node_command(Command *command, char *arguments[]);
+void initialize_find_xpath_command(Command *command, char *arguments[]);

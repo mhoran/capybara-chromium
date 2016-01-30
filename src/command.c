@@ -122,3 +122,34 @@ initialize_node_command(Command *command, char *arguments[])
 	command->arguments = arguments;
 	command->run = run_node_command;
 }
+
+static
+void
+run_find_xpath_command(Command *self, Context *context)
+{
+	fprintf(stderr, "Started FindXpath\n");
+	cef_string_t name = {};
+	cef_string_set(u"CapybaraInvocation", 18, &name, 0);
+	cef_process_message_t *message = cef_process_message_create(&name);
+
+	cef_list_value_t *args = message->get_argument_list(message);
+
+	cef_string_t value = {};
+	cef_string_set(u"findXpath", 9, &value, 0);
+	args->set_string(args, 0, &value);
+
+	args->set_bool(args, 1, 1);
+
+	cef_string_utf8_to_utf16(self->arguments[0], strlen(self->arguments[0]), &value);
+	args->set_string(args, 2, &value);
+	cef_string_clear(&value);
+
+	context->browser->send_process_message(context->browser, PID_RENDERER, message);
+}
+
+void
+initialize_find_xpath_command(Command *command, char *arguments[])
+{
+	command->arguments = arguments;
+	command->run = run_find_xpath_command;
+}
