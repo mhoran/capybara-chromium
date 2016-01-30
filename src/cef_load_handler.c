@@ -19,7 +19,17 @@ GENERATE_CEF_BASE_INITIALIZER(load_handler)
 ///
 void CEF_CALLBACK on_loading_state_change(struct _cef_load_handler_t* self,
     struct _cef_browser_t* browser, int isLoading, int canGoBack,
-    int canGoForward) {}
+    int canGoForward)
+{
+	if (isLoading == 1) {
+		fprintf(stderr, "Load started\n");
+	} else {
+		fprintf(stderr, "Load finished\n");
+		load_handler *handler;
+		handler = (load_handler *)self;
+		handler->context->on_load_end(handler->context);
+	}
+}
 
 ///
 // Called when the browser begins loading a frame. The |frame| value will
@@ -31,10 +41,7 @@ void CEF_CALLBACK on_loading_state_change(struct _cef_load_handler_t* self,
 // OnLoadingStateChange instead.
 ///
 void CEF_CALLBACK on_load_start(struct _cef_load_handler_t* self,
-    struct _cef_browser_t* browser, struct _cef_frame_t* frame)
-{
-	fprintf(stderr, "Load started\n");
-}
+    struct _cef_browser_t* browser, struct _cef_frame_t* frame) {}
 
 ///
 // Called when the browser is done loading a frame. The |frame| value will
@@ -46,13 +53,7 @@ void CEF_CALLBACK on_load_start(struct _cef_load_handler_t* self,
 ///
 void CEF_CALLBACK on_load_end(struct _cef_load_handler_t* self,
     struct _cef_browser_t* browser, struct _cef_frame_t* frame,
-    int httpStatusCode)
-{
-	fprintf(stderr, "Load finished\n");
-	load_handler *handler;
-	handler = (load_handler *)self;
-	handler->context->on_load_end(handler->context);
-}
+    int httpStatusCode) {}
 
 ///
 // Called when the resource load for a navigation fails or is canceled.
