@@ -10,6 +10,7 @@ static
 void
 run_visit_command(Command *self, Context *context)
 {
+	fprintf(stderr, "Started Visit\n");
 	cef_string_t url = {};
 	cef_string_utf8_to_utf16(self->arguments[0], strlen(self->arguments[0]), &url);
 	cef_frame_t *frame = context->browser->get_main_frame(context->browser);
@@ -41,6 +42,7 @@ static
 void
 run_body_command(Command *self, Context *context)
 {
+	fprintf(stderr, "Started Body\n");
 	string_visitor *v;
 	v = calloc(1, sizeof(string_visitor));
 	cef_string_visitor_t *visitor = (cef_string_visitor_t *)v;
@@ -63,7 +65,7 @@ static
 void
 run_find_css_command(Command *self, Context *context)
 {
-	fprintf(stderr, "Received FindCss\n");
+	fprintf(stderr, "Started FindCss\n");
 	cef_string_t name = {};
 	cef_string_set(u"CapybaraInvocation", 18, &name, 0);
 	cef_process_message_t *message = cef_process_message_create(&name);
@@ -94,7 +96,7 @@ static
 void
 run_node_command(Command *self, Context *context)
 {
-	fprintf(stderr, "Received Node\n");
+	fprintf(stderr, "Started Node\n");
 	cef_string_t name = {};
 	cef_string_set(u"CapybaraInvocation", 18, &name, 0);
 	cef_process_message_t *message = cef_process_message_create(&name);

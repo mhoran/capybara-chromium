@@ -31,7 +31,10 @@ void CEF_CALLBACK on_loading_state_change(struct _cef_load_handler_t* self,
 // OnLoadingStateChange instead.
 ///
 void CEF_CALLBACK on_load_start(struct _cef_load_handler_t* self,
-    struct _cef_browser_t* browser, struct _cef_frame_t* frame) {}
+    struct _cef_browser_t* browser, struct _cef_frame_t* frame)
+{
+	fprintf(stderr, "Load started\n");
+}
 
 ///
 // Called when the browser is done loading a frame. The |frame| value will
@@ -45,6 +48,7 @@ void CEF_CALLBACK on_load_end(struct _cef_load_handler_t* self,
     struct _cef_browser_t* browser, struct _cef_frame_t* frame,
     int httpStatusCode)
 {
+	fprintf(stderr, "Load finished\n");
 	load_handler *handler;
 	handler = (load_handler *)self;
 	handler->context->on_load_end(handler->context);

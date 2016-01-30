@@ -11,6 +11,7 @@ execute(cef_task_t *self)
 {
 	Task *t = ((Task *)self);
 	if (t->context->browser->is_loading(t->context->browser)) {
+		fprintf(stderr, "Blocking response on page load\n");
 		Response *response = calloc(1, sizeof(Response));
 		response->message = t->message;
 		t->context->pending_response = response;
@@ -22,9 +23,12 @@ execute(cef_task_t *self)
 	if (t->message != NULL) {
 		printf("%zu\n", t->message->length);
 		printf("%s", t->message->str);
+		fprintf(stderr, "Wrote response true \"%s\"\n", t->message->str);
 		cef_string_userfree_utf8_free(t->message);
-	} else
+	} else {
 		printf("0\n");
+		fprintf(stderr, "Wrote response true \"\"\n");
+	}
 
 	fflush(stdout);
 }
@@ -32,6 +36,8 @@ execute(cef_task_t *self)
 static
 void finish(Context *self, cef_string_userfree_utf8_t message)
 {
+	fprintf(stderr, "Command finished with response Success(%s)\n",
+	    message ? message->str : "");
 	Task *t = calloc(1, sizeof(Task));
 	t->context = self;
 	t->message = message;
@@ -45,6 +51,7 @@ void
 handle_load_event(Context *self)
 {
 	if (self->pending_response != NULL) {
+		fprintf(stderr, "Finishing pending response\n");
 		Response *response = self->pending_response;
 		self->pending_response = NULL;
 		self->finish(self, response->message);

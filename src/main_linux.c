@@ -21,9 +21,13 @@ typedef struct {
 	char **arguments;
 } ReceivedCommand;
 
+
 void
 startCommand(ReceivedCommand *cmd, Context *context)
 {
+	fprintf(stderr, "Received %s(%s)\n", cmd->commandName,
+	    cmd->argumentsExpected != 0 ? cmd->arguments[0] : "");
+
 	Command command = {};
 	if (strcmp(cmd->commandName, "Visit") == 0) {
 		initialize_visit_command(&command, cmd->arguments);
@@ -34,7 +38,6 @@ startCommand(ReceivedCommand *cmd, Context *context)
 	} else if (strcmp(cmd->commandName, "Node") == 0 ) {
 		initialize_node_command(&command, cmd->arguments);
 	} else {
-		fprintf(stderr, "Received unknown command: %s\n", cmd->commandName);
 		printf("ok\n");
 		printf("0\n");
 		fflush(stdout);
