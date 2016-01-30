@@ -2,6 +2,8 @@
 // License: BSD 3-clause.
 // Website: https://github.com/CzarekTomczak/cefcapi
 
+#include <string.h>
+
 #include "cef_life_span_handler.h"
 #include "cef_render_handler.h"
 #include "cef_load_handler.h"
@@ -209,7 +211,35 @@ int CEF_CALLBACK on_process_message_received(
         struct _cef_browser_t* browser, cef_process_id_t source_process,
         struct _cef_process_message_t* message) {
     DEBUG_CALLBACK("on_process_message_received\n");
-    return 0;
+    int success;
+    cef_string_userfree_t name = message->get_name(message);
+    cef_string_utf8_t out = {};
+    cef_string_utf16_to_utf8(name->str, name->length, &out);
+    cef_string_userfree_free(name);
+    if (strcmp(out.str, "InvocationResult") == 0) {
+	    client_t *client = (client_t *)self;
+	    cef_string_userfree_utf8_t result = NULL;
+
+	    cef_list_value_t *arguments = message->get_argument_list(message);
+
+	    cef_string_userfree_t value;
+	    value = arguments->get_string(arguments, 0);
+
+	    if (value != NULL) {
+		    result = cef_string_userfree_utf8_alloc();
+		    cef_string_utf16_to_utf8(value->str, value->length, result);
+		    cef_string_userfree_free(value);
+	    }
+
+	    client->context->finish(client->context, result);
+
+	    success = 1;
+    } else {
+	    success = 0;
+    }
+    cef_string_utf8_clear(&out);
+
+    return success;
 }
 
 void initialize_client_handler(client_t* c) {

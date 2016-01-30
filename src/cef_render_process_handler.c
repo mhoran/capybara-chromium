@@ -151,25 +151,19 @@ on_focused_node_changed(
 
 void
 CEF_CALLBACK
-handle_invocation_result(struct _cef_v8value_t* object)
+handle_invocation_result(struct _cef_browser_t *browser, struct _cef_v8value_t* object)
 {
 	cef_string_userfree_t value = object->get_string_value(object);
 
-	cef_string_utf8_t out = {};
-	if (value != NULL) {
-		cef_string_utf16_to_utf8(value->str, value->length, &out);
-		cef_string_userfree_free(value);
-	}
+	cef_string_t name = {};
+	cef_string_set(u"InvocationResult", 16, &name, 0);
+	cef_process_message_t *message = cef_process_message_create(&name);
 
-	printf("ok\n");
-	if (out.length > 0) {
-		printf("%zu\n", out.length);
-		printf("%s", out.str);
-	} else
-		printf("0\n");
-	cef_string_utf8_clear(&out);
+	cef_list_value_t *args = message->get_argument_list(message);
 
-	fflush(stdout);
+	args->set_string(args, 0, value);
+
+	browser->send_process_message(browser, PID_BROWSER, message);
 }
 
 ///
@@ -230,7 +224,7 @@ on_render_process_message_received(
 		cef_v8value_t *retval = NULL;
 		cef_v8exception_t *exception = NULL;
 		if (context->eval(context, &script, &retval, &exception))
-			handle_invocation_result(retval);
+			handle_invocation_result(browser, retval);
 
 		context->exit(context);
 

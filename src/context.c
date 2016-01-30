@@ -30,7 +30,7 @@ execute(cef_task_t *self)
 }
 
 static
-void finish(Context *self, cef_string_utf8_t *message)
+void finish(Context *self, cef_string_userfree_utf8_t message)
 {
 	Task *t = calloc(1, sizeof(Task));
 	t->context = self;

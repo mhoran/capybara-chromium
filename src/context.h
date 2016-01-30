@@ -10,7 +10,7 @@ typedef struct _Response {
 typedef struct _Context {
 	cef_browser_t *browser;
 	void (*on_load_end)(struct _Context *self);
-	void (*finish)(struct _Context *self, cef_string_utf8_t *);
+	void (*finish)(struct _Context *self, cef_string_userfree_utf8_t);
 	Response *pending_response;
 } Context;
 
