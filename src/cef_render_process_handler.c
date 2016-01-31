@@ -206,6 +206,7 @@ on_render_process_message_received(
 
 		cef_frame_t *frame = browser->get_main_frame(browser);
 		cef_v8context_t *context = frame->get_v8context(frame);
+		frame->base.release((cef_base_t* )frame);
 		context->enter(context);
 
 		cef_v8value_t *invocation = cef_v8value_create_object(NULL);
@@ -245,6 +246,7 @@ on_render_process_message_received(
 			handle_invocation_result(browser, retval);
 
 		context->exit(context);
+		context->base.release((cef_base_t *)context);
 
 		success = 1;
 	} else {
