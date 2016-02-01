@@ -13,8 +13,6 @@ typedef struct _life_span_handler_t {
 	atomic_int ref_count;
 } life_span_handler_t;
 
-void ready();
-
 int CEF_CALLBACK on_before_popup(struct _cef_life_span_handler_t* self,
     struct _cef_browser_t* browser, struct _cef_frame_t* frame,
     const cef_string_t* target_url, const cef_string_t* target_frame_name,

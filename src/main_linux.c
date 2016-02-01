@@ -127,6 +127,11 @@ void *f(void *arg) {
 	cef_browser_host_t *host = context->browser->get_host(context->browser);
 	host->close_browser(host, 1);
 
+	cef_task_t *t = calloc(1, sizeof(cef_task_t));
+	t->base.size = sizeof(cef_task_t);
+	t->execute = cef_quit_message_loop;
+	cef_post_task(TID_UI, t);
+
 	return NULL;
 }
 
@@ -187,8 +192,13 @@ int main(int argc, char** argv) {
     // Create browser.
     cef_client_t *client = (cef_client_t *)&c;
     client->base.add_ref((cef_base_t *)client);
-    cef_browser_host_create_browser(&windowInfo, client, NULL,
-            &browserSettings, NULL);
+    cef_browser_t *browser = cef_browser_host_create_browser_sync(&windowInfo,
+	client, NULL, &browserSettings, NULL);
+    browser->base.add_ref((cef_base_t *)browser);
+    context.browser = browser;
+
+    printf("Ready\n");
+    fflush(stdout);
 
     pthread_t pth;
     pthread_create(&pth, NULL, f, &context);
@@ -200,9 +210,4 @@ int main(int argc, char** argv) {
     cef_shutdown();
 
     return 0;
-}
-
-void ready() {
-    printf("Ready\n");
-    fflush(stdout);
 }

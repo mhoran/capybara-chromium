@@ -38,11 +38,8 @@ int CEF_CALLBACK on_before_popup(struct _cef_life_span_handler_t* self,
 // Called after a new browser is created.
 ///
 void CEF_CALLBACK on_after_created(struct _cef_life_span_handler_t* self,
-    struct _cef_browser_t* browser) {
-    	life_span_handler_t *handler = (life_span_handler_t *)self;
-	handler->context->browser = browser;
-	ready();
-}
+    struct _cef_browser_t* browser)
+{ }
 
 ///
 // Called when a modal window is about to display and the modal loop should
@@ -127,5 +124,5 @@ int CEF_CALLBACK do_close(struct _cef_life_span_handler_t* self,
 void CEF_CALLBACK on_before_close(struct _cef_life_span_handler_t* self,
     struct _cef_browser_t* browser)
 {
-	cef_quit_message_loop();
+	browser->base.release((cef_base_t *)browser);
 }
