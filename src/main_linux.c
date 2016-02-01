@@ -21,7 +21,6 @@ typedef struct {
 	char **arguments;
 } ReceivedCommand;
 
-
 void
 startCommand(ReceivedCommand *cmd, Context *context)
 {
@@ -39,6 +38,8 @@ startCommand(ReceivedCommand *cmd, Context *context)
 		initialize_node_command(&command, cmd->arguments);
 	} else if (strcmp(cmd->commandName, "FindXpath") == 0 ) {
 		initialize_find_xpath_command(&command, cmd->arguments);
+	} else if (strcmp(cmd->commandName, "Reset") == 0 ) {
+		initialize_reset_command(&command, cmd->arguments);
 	} else {
 		printf("ok\n");
 		printf("0\n");
@@ -192,8 +193,17 @@ int main(int argc, char** argv) {
     // Create browser.
     cef_client_t *client = (cef_client_t *)&c;
     client->base.add_ref((cef_base_t *)client);
+    context.client = client;
+
+    cef_request_context_settings_t request_context_settings = {};
+    request_context_settings.size = sizeof(cef_request_context_settings_t);
+
+    cef_request_context_t *request_context =
+	cef_request_context_create_context(&request_context_settings, NULL);
+
+    client->base.add_ref((cef_base_t *)client);
     cef_browser_t *browser = cef_browser_host_create_browser_sync(&windowInfo,
-	client, NULL, &browserSettings, NULL);
+	client, NULL, &browserSettings, request_context);
     browser->base.add_ref((cef_base_t *)browser);
     context.browser = browser;
 
