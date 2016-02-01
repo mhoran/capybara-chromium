@@ -15,6 +15,7 @@ run_visit_command(Command *self, Context *context)
 	cef_string_utf8_to_utf16(self->arguments[0], strlen(self->arguments[0]), &url);
 	cef_frame_t *frame = context->browser->get_main_frame(context->browser);
 	frame->load_url(frame, &url);
+	frame->base.release((cef_base_t *)frame);
 	cef_string_clear(&url);
 	context->finish(context, NULL);
 }
@@ -52,6 +53,7 @@ run_body_command(Command *self, Context *context)
 	visitor->base.add_ref((cef_base_t *)v);
 	cef_frame_t *frame = context->browser->get_main_frame(context->browser);
 	frame->get_source(frame, visitor);
+	frame->base.release((cef_base_t *)frame);
 }
 
 void
