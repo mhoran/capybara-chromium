@@ -171,15 +171,22 @@ void
 CEF_CALLBACK
 handle_invocation_result(struct _cef_browser_t *browser, struct _cef_v8value_t* object)
 {
-	cef_string_userfree_t value = object->get_string_value(object);
-
 	cef_string_t name = {};
 	cef_string_set(u"InvocationResult", 16, &name, 0);
 	cef_process_message_t *message = cef_process_message_create(&name);
 
 	cef_list_value_t *args = message->get_argument_list(message);
 
-	args->set_string(args, 0, value);
+	cef_string_userfree_t value = NULL;
+	if (object->is_string(object)) {
+		value = object->get_string_value(object);
+		args->set_string(args, 0, value);
+		if (value != NULL)
+			cef_string_userfree_free(value);
+	} else if (object->is_bool(object)) {
+		int value = object->get_bool_value(object);
+		args->set_bool(args, 0, value);
+	}
 
 	browser->send_process_message(browser, PID_BROWSER, message);
 }
@@ -223,11 +230,14 @@ on_render_process_message_received(
 		cef_string_set(u"allowUnattached", 15, &key, 0);
 		invocation->set_value_bykey(invocation, &key, allow_unattached, V8_PROPERTY_ATTRIBUTE_NONE);
 
-		cef_v8value_t *invocation_arguments = cef_v8value_create_array(1);
-		s = arguments->get_string(arguments, 2);
-		cef_v8value_t *argument = cef_v8value_create_string(s);
-		cef_string_userfree_free(s);
-		invocation_arguments->set_value_byindex(invocation_arguments, 0, argument);
+		int size = arguments->get_size(arguments);
+		cef_v8value_t *invocation_arguments = cef_v8value_create_array(size - 2);
+		for (int i = 2, j = 0; i < size; i++, j++) {
+			s = arguments->get_string(arguments, i);
+			cef_v8value_t *argument = cef_v8value_create_string(s);
+			cef_string_userfree_free(s);
+			invocation_arguments->set_value_byindex(invocation_arguments, j, argument);
+		}
 
 		cef_string_set(u"arguments", 9, &key, 0);
 		invocation->set_value_bykey(invocation, &key, invocation_arguments, V8_PROPERTY_ATTRIBUTE_NONE);

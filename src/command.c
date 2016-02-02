@@ -111,16 +111,19 @@ run_node_command(Command *self, Context *context)
 
 	args->set_bool(args, 1, strcmp(self->arguments[1], "true") == 0);
 
-	cef_string_utf8_to_utf16(self->arguments[2], strlen(self->arguments[2]), &value);
-	args->set_string(args, 2, &value);
-	cef_string_clear(&value);
+	for (int i = 2; i < self->argument_count; i++) {
+		cef_string_utf8_to_utf16(self->arguments[i], strlen(self->arguments[i]), &value);
+		args->set_string(args, i, &value);
+		cef_string_clear(&value);
+	}
 
 	context->browser->send_process_message(context->browser, PID_RENDERER, message);
 }
 
 void
-initialize_node_command(Command *command, char *arguments[])
+initialize_node_command(Command *command, char *arguments[], int argument_count)
 {
+	command->argument_count = argument_count;
 	command->arguments = arguments;
 	command->run = run_node_command;
 }

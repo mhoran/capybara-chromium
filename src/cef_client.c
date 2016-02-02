@@ -207,13 +207,22 @@ int CEF_CALLBACK on_process_message_received(
 
 	    cef_list_value_t *arguments = message->get_argument_list(message);
 
-	    cef_string_userfree_t value;
-	    value = arguments->get_string(arguments, 0);
-
-	    if (value != NULL) {
+	    cef_value_type_t type = arguments->get_type(arguments, 0);
+	    if (type == VTYPE_STRING) {
+		    cef_string_userfree_t value;
+		    value = arguments->get_string(arguments, 0);
+		    if (value != NULL) {
+			    result = cef_string_userfree_utf8_alloc();
+			    cef_string_utf16_to_utf8(value->str, value->length, result);
+			    cef_string_userfree_free(value);
+		    }
+	    } else if (type == VTYPE_BOOL) {
 		    result = cef_string_userfree_utf8_alloc();
-		    cef_string_utf16_to_utf8(value->str, value->length, result);
-		    cef_string_userfree_free(value);
+		    if (arguments->get_bool(arguments, 0)) {
+			    cef_string_utf8_set("true", 4, result, 0);
+		    } else {
+			    cef_string_utf8_set("false", 5, result, 0);
+		    }
 	    }
 
 	    client->context->finish(client->context, result);

@@ -35,7 +35,7 @@ startCommand(ReceivedCommand *cmd, Context *context)
 	} else if (strcmp(cmd->commandName, "FindCss") == 0 ) {
 		initialize_find_css_command(&command, cmd->arguments);
 	} else if (strcmp(cmd->commandName, "Node") == 0 ) {
-		initialize_node_command(&command, cmd->arguments);
+		initialize_node_command(&command, cmd->arguments, cmd->argumentsExpected);
 	} else if (strcmp(cmd->commandName, "FindXpath") == 0 ) {
 		initialize_find_xpath_command(&command, cmd->arguments);
 	} else if (strcmp(cmd->commandName, "Reset") == 0 ) {
