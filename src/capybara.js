@@ -5,9 +5,10 @@ Capybara = {
 
   invoke: function () {
     try {
-      return this[CapybaraInvocation.functionName].apply(this, CapybaraInvocation.arguments);
-    } catch (e) {
-      CapybaraInvocation.error = e;
+    return this[CapybaraInvocation.functionName].apply(this, CapybaraInvocation.arguments);
+    } catch(e) {
+      window.CapybaraInvocationError = e;
+      throw new Error();
     }
   },
 

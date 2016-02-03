@@ -47,6 +47,18 @@ void finish(Context *self, cef_string_userfree_utf8_t message)
 }
 
 static
+void finishFailure(Context *self, cef_string_userfree_utf8_t message)
+{
+	printf("failure\n");
+
+	printf("%zu\n", message->length);
+	printf("%s", message->str);
+	fprintf(stderr, "Wrote response false \"%s\"\n", message->str);
+	cef_string_userfree_utf8_free(message);
+	fflush(stdout);
+}
+
+static
 void
 handle_load_event(Context *self)
 {
@@ -61,5 +73,6 @@ handle_load_event(Context *self)
 void initialize_context(Context *context)
 {
     context->finish = finish;
+    context->finishFailure = finishFailure;
     context->on_load_end = handle_load_event;
 }

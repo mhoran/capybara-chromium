@@ -191,6 +191,40 @@ handle_invocation_result(struct _cef_browser_t *browser, struct _cef_v8value_t* 
 	browser->send_process_message(browser, PID_BROWSER, message);
 }
 
+void
+CEF_CALLBACK
+handle_invocation_exception(struct _cef_browser_t *browser, cef_v8value_t *window, struct _cef_v8exception_t* object)
+{
+	cef_string_t message_name = {};
+	cef_string_set(u"InvocationError", 19, &message_name, 0);
+	cef_process_message_t *cef_message = cef_process_message_create(&message_name);
+
+	cef_list_value_t *args = cef_message->get_argument_list(cef_message);
+
+	cef_string_t key = {};
+	cef_string_set(u"CapybaraInvocationError", 23, &key, 0);
+	cef_v8value_t *error_object = window->get_value_bykey(window, &key);
+
+	if (error_object != NULL) {
+		cef_v8value_t *val;
+		cef_string_userfree_t str = NULL;
+
+		cef_string_set(u"name", 4, &key, 0);
+		val = error_object->get_value_bykey(error_object, &key);
+		str = val->get_string_value(val);
+		args->set_string(args, 0, str);
+		cef_string_userfree_free(str);
+
+		cef_string_set(u"message", 7, &key, 0);
+		val = error_object->get_value_bykey(error_object, &key);
+		str = val->get_string_value(val);
+		args->set_string(args, 1, str);
+		cef_string_userfree_free(str);
+	}
+
+	browser->send_process_message(browser, PID_BROWSER, cef_message);
+}
+
 ///
 // Called when a new message is received from a different process. Return true
 // (1) if the message was handled or false (0) otherwise. Do not keep a
@@ -254,6 +288,8 @@ on_render_process_message_received(
 		cef_v8exception_t *exception = NULL;
 		if (context->eval(context, &script, &retval, &exception))
 			handle_invocation_result(browser, retval);
+		else
+			handle_invocation_exception(browser, object, exception);
 
 		context->exit(context);
 		context->base.release((cef_base_t *)context);

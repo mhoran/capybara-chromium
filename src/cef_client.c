@@ -201,8 +201,8 @@ int CEF_CALLBACK on_process_message_received(
     cef_string_utf8_t out = {};
     cef_string_utf16_to_utf8(name->str, name->length, &out);
     cef_string_userfree_free(name);
+    client_t *client = (client_t *)self;
     if (strcmp(out.str, "InvocationResult") == 0) {
-	    client_t *client = (client_t *)self;
 	    cef_string_userfree_utf8_t result = NULL;
 
 	    cef_list_value_t *arguments = message->get_argument_list(message);
@@ -226,6 +226,27 @@ int CEF_CALLBACK on_process_message_received(
 	    }
 
 	    client->context->finish(client->context, result);
+
+	    success = 1;
+    } else if (strcmp(out.str, "InvocationError") == 0) {
+	    cef_list_value_t *arguments = message->get_argument_list(message);
+
+            cef_string_utf8_t name = {};
+            cef_string_utf8_set("InvalidResponseError", 20, &name, 0);
+
+	    cef_string_userfree_t value;
+	    value = arguments->get_string(arguments, 1);
+	    cef_string_userfree_utf8_t msg = cef_string_userfree_utf8_alloc();
+	    cef_string_utf16_to_utf8(value->str, value->length, msg);
+	    cef_string_userfree_free(value);
+
+	    cef_string_userfree_utf8_t result = cef_string_userfree_utf8_alloc();
+	    char buf[25 + name.length + msg->length];
+	    sprintf(buf, "{\"class\":\"%s\",\"message\":\"%s\"}", name.str, msg->str);
+	    cef_string_userfree_utf8_free(msg);
+	    cef_string_utf8_set(buf, sizeof(buf), result, 1);
+
+	    client->context->finishFailure(client->context, result);
 
 	    success = 1;
     } else {
