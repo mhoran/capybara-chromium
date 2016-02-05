@@ -269,7 +269,8 @@ on_render_process_message_received(
 		for (int i = 2, j = 0; i < size; i++, j++) {
 			s = arguments->get_string(arguments, i);
 			cef_v8value_t *argument = cef_v8value_create_string(s);
-			cef_string_userfree_free(s);
+			if (s != NULL)
+				cef_string_userfree_free(s);
 			invocation_arguments->set_value_byindex(invocation_arguments, j, argument);
 		}
 
