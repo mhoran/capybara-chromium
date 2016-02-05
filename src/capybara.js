@@ -170,8 +170,8 @@ Capybara = {
     if (currentNode == expectedNode) {
       return CapybaraInvocation.clickTest(
         expectedNode,
-        pos.absoluteX,
-        pos.absoluteY
+        pos.relativeX,
+        pos.relativeY
       );
     } else if (currentNode) {
       return this.isNodeOrChildAtPosition(
@@ -184,6 +184,24 @@ Capybara = {
     }
   },
 
+  visibleCenterOfRect: function(rect) {
+    var left = Math.trunc(rect.left);
+    var top = Math.trunc(rect.top);
+    var width = Math.trunc(rect.width);
+    var height = Math.trunc(rect.height);
+
+    var boundedWidth = Math.min(left + width, window.innerWidth);
+    var boundedHeight = Math.min(top + height, window.innerHeight);
+
+    var x = left + Math.trunc((boundedWidth - left) / 2) - 1;
+    var y = top + Math.trunc((boundedHeight - top) / 2) - 1;
+
+    return {
+      relativeX: x,
+      relativeY: y
+    }
+  },
+
   clickPosition: function(node) {
     var rects = node.getClientRects();
     var rect;
@@ -191,7 +209,7 @@ Capybara = {
     for (var i = 0; i < rects.length; i++) {
       rect = rects[i];
       if (rect.width > 0 && rect.height > 0)
-        return CapybaraInvocation.clickPosition(node, rect.left, rect.top, rect.width, rect.height);
+        return this.visibleCenterOfRect(rect);
     }
 
     var visible = this.isNodeVisible(node);
@@ -204,7 +222,7 @@ Capybara = {
     var pos = this.clickPosition(node);
     CapybaraInvocation.hover(pos.relativeX, pos.relativeY);
     this.expectNodeAtPosition(node, pos);
-    action(pos.absoluteX, pos.absoluteY);
+    action(pos.relativeX, pos.relativeY);
   },
 
   leftClick: function (index) {
@@ -422,7 +440,7 @@ Capybara.ClickFailed = function(expectedPath, actualPath, position) {
   if (actualPath)
     this.message += ' because of overlapping element ' + actualPath;
   if (position)
-    this.message += ' at position ' + position["absoluteX"] + ', ' + position["absoluteY"];
+    this.message += ' at position ' + position["relativeX"] + ', ' + position["relativeY"];
   else
     this.message += ' at unknown position';
   this.message += "; \nA screenshot of the page at the time of the failure has been written to " + CapybaraInvocation.render();
