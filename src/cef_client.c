@@ -250,6 +250,18 @@ int CEF_CALLBACK on_process_message_received(
 	    client->context->finishFailure(client->context, result);
 
 	    success = 1;
+    } else if (strcmp(out.str, "SendMouseClickEvent") == 0) {
+	    cef_list_value_t *arguments = message->get_argument_list(message);
+
+	    int x = arguments->get_int(arguments, 0);
+	    int y = arguments->get_int(arguments, 1);
+	    cef_mouse_event_t event = { .x = x, .y = y };
+	    cef_browser_host_t *host = browser->get_host(browser);
+	    host->send_mouse_click_event(host, &event, MBT_LEFT, 0, 1);
+	    host->send_mouse_click_event(host, &event, MBT_LEFT, 1, 1);
+	    host->base.release((cef_base_t *)host);
+
+	    success = 1;
     } else {
 	    success = 0;
     }
