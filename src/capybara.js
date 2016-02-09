@@ -5,7 +5,7 @@ Capybara = {
 
   invoke: function () {
     try {
-    return this[CapybaraInvocation.functionName].apply(this, CapybaraInvocation.arguments);
+      return this[CapybaraInvocation.functionName].apply(this, CapybaraInvocation.arguments);
     } catch(e) {
       window.CapybaraInvocationError = e;
       throw new Error();
@@ -222,11 +222,16 @@ Capybara = {
     var pos = this.clickPosition(node);
     CapybaraInvocation.hover(pos.relativeX, pos.relativeY);
     this.expectNodeAtPosition(node, pos);
+    document.addEventListener('click', function() {
+      document.removeEventListener('click', this, true);
+      CapybaraInvocation.done();
+    }, true);
     action(pos.relativeX, pos.relativeY);
   },
 
   leftClick: function (index) {
     this.click(index, CapybaraInvocation.leftClick);
+    return function() {};
   },
 
   doubleClick: function(index) {

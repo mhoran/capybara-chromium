@@ -186,6 +186,8 @@ handle_invocation_result(struct _cef_browser_t *browser, struct _cef_v8value_t* 
 	} else if (object->is_bool(object)) {
 		int value = object->get_bool_value(object);
 		args->set_bool(args, 0, value);
+	} else if (object->is_function(object)) {
+		return;
 	}
 
 	browser->send_process_message(browser, PID_BROWSER, message);
@@ -225,6 +227,15 @@ handle_invocation_exception(struct _cef_browser_t *browser, cef_v8value_t *windo
 	browser->send_process_message(browser, PID_BROWSER, cef_message);
 }
 
+static
+void
+execute_done_task(cef_task_t *self)
+{
+	BrowserMessageTask *task = (BrowserMessageTask *)self;
+	task->browser->send_process_message(task->browser, PID_BROWSER, task->message);
+	task->browser->base.release((cef_base_t *)task->browser);
+}
+
 static int CEF_CALLBACK
 execute(struct _cef_v8handler_t* self,
     const cef_string_t* name, struct _cef_v8value_t* object,
@@ -255,6 +266,23 @@ execute(struct _cef_v8handler_t* self,
 
 		browser->send_process_message(browser, PID_BROWSER, cef_message);
 		browser->base.release((cef_base_t *)browser);
+
+		success = 1;
+	} else if (strcmp(out.str, "done") == 0) {
+		cef_string_t name = {};
+		cef_string_set(u"RequestInvocationResult", 23, &name, 0);
+		cef_process_message_t *message = cef_process_message_create(&name);
+
+		cef_v8context_t *context = cef_v8context_get_current_context();
+		cef_browser_t *browser = context->get_browser(context);
+		browser->base.add_ref((cef_base_t *)browser);
+
+		BrowserMessageTask *t = calloc(1, sizeof(BrowserMessageTask));
+		t->browser = browser;
+		t->message = message;
+		((cef_task_t *)t)->base.size = sizeof(BrowserMessageTask);
+		((cef_task_t *)t)->execute = execute_done_task;
+		cef_post_task(TID_RENDERER, (cef_task_t *)t);
 
 		success = 1;
 	} else {
@@ -332,6 +360,10 @@ on_render_process_message_received(
 		fn = cef_v8value_create_function(&key, handler);
 		invocation->set_value_bykey(invocation, &key, fn, V8_PROPERTY_ATTRIBUTE_NONE);
 
+		cef_string_set(u"done", 4, &key, 0);
+		fn = cef_v8value_create_function(&key, handler);
+		invocation->set_value_bykey(invocation, &key, fn, V8_PROPERTY_ATTRIBUTE_NONE);
+
 		cef_v8value_t *object = context->get_global(context);
 
 		cef_string_set(u"CapybaraInvocation", 18, &key, 0);
@@ -351,6 +383,12 @@ on_render_process_message_received(
 		context->base.release((cef_base_t *)context);
 
 		success = 1;
+	} else if (strcmp(out.str, "InvocationResultRequest") == 0) {
+		cef_string_t name = {};
+		cef_string_set(u"InvocationResult", 16, &name, 0);
+		cef_process_message_t *message = cef_process_message_create(&name);
+
+		browser->send_process_message(browser, PID_BROWSER, message);
 	} else {
 		success = 0;
 	}

@@ -262,6 +262,14 @@ int CEF_CALLBACK on_process_message_received(
 	    host->base.release((cef_base_t *)host);
 
 	    success = 1;
+    } else if (strcmp(out.str, "RequestInvocationResult") == 0) {
+	    cef_string_t name = {};
+	    cef_string_set(u"InvocationResultRequest", 23, &name, 0);
+	    cef_process_message_t *message = cef_process_message_create(&name);
+
+	    browser->send_process_message(browser, PID_RENDERER, message);
+
+	    success = 1;
     } else {
 	    success = 0;
     }
