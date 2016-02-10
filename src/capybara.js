@@ -448,7 +448,6 @@ Capybara.ClickFailed = function(expectedPath, actualPath, position) {
     this.message += ' at position ' + position["relativeX"] + ', ' + position["relativeY"];
   else
     this.message += ' at unknown position';
-  this.message += "; \nA screenshot of the page at the time of the failure has been written to " + CapybaraInvocation.render();
 };
 Capybara.ClickFailed.prototype = new Error();
 Capybara.ClickFailed.prototype.constructor = Capybara.ClickFailed;
