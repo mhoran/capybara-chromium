@@ -75,4 +75,6 @@ void initialize_context(Context *context)
     context->finish = finish;
     context->finishFailure = finishFailure;
     context->on_load_end = handle_load_event;
+    context->width = 1680;
+    context->height = 1050;
 }

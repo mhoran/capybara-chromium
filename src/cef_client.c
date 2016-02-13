@@ -155,6 +155,7 @@ struct _cef_render_handler_t* CEF_CALLBACK get_render_handler(
 #ifdef WINDOWLESS
     render_handler *h;
     h = calloc(1, sizeof(render_handler));
+    h->context = ((client_t *)self)->context;
 
     cef_render_handler_t *handler = (cef_render_handler_t *)h;
     initialize_cef_base(h);

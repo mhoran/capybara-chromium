@@ -38,6 +38,8 @@ startCommand(ReceivedCommand *cmd, Context *context)
 		initialize_node_command(&command, cmd->arguments, cmd->argumentsExpected);
 	} else if (strcmp(cmd->commandName, "FindXpath") == 0 ) {
 		initialize_find_xpath_command(&command, cmd->arguments);
+	} else if (strcmp(cmd->commandName, "WindowResize") == 0 ) {
+		initialize_resize_window_command(&command, cmd->arguments);
 	} else if (strcmp(cmd->commandName, "Reset") == 0 ) {
 		initialize_reset_command(&command, cmd->arguments);
 	} else {

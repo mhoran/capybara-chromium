@@ -4,8 +4,11 @@
 
 #include "include/capi/cef_render_handler_capi.h"
 
+#include "context.h"
+
 typedef struct _render_handler {
 	cef_render_handler_t handler;
+	Context *context;
 	atomic_int ref_count;
 } render_handler;
 

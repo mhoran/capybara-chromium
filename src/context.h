@@ -15,6 +15,8 @@ typedef struct _Context {
 	void (*finishFailure)(struct _Context *self, cef_string_userfree_utf8_t);
 	Response *pending_response;
 	cef_client_t *client;
+	int width;
+	int height;
 } Context;
 
 typedef struct {

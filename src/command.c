@@ -158,3 +158,28 @@ initialize_find_xpath_command(Command *command, char *arguments[])
 	command->arguments = arguments;
 	command->run = run_find_xpath_command;
 }
+
+static
+void
+run_resize_window_command(Command *self, Context *context)
+{
+	fprintf(stderr, "Started ResizeWindow\n");
+
+	int width = atoi(self->arguments[1]);
+	int height = atoi(self->arguments[2]);
+	context->width = width;
+	context->height = height;
+
+	cef_browser_host_t *host = context->browser->get_host(context->browser);
+	host->was_resized(host);
+	host->base.release((cef_base_t *)host);
+
+	context->finish(context, NULL);
+}
+
+void
+initialize_resize_window_command(Command *command, char *arguments[])
+{
+	command->arguments = arguments;
+	command->run = run_resize_window_command;
+}

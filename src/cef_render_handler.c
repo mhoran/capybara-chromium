@@ -18,10 +18,11 @@ CEF_CALLBACK
 get_root_screen_rect(struct _cef_render_handler_t* self,
     struct _cef_browser_t* browser, cef_rect_t* rect)
 {
+	render_handler *handler = (render_handler *)self;
 	rect->x = 0;
 	rect->y = 0;
-	rect->width = 1024;
-	rect->height = 768;
+	rect->width = handler->context->width;
+	rect->height = handler->context->height;
 
 	return 1;
 }
@@ -35,10 +36,11 @@ CEF_CALLBACK
 get_view_rect(struct _cef_render_handler_t* self,
     struct _cef_browser_t* browser, cef_rect_t* rect)
 {
+	render_handler *handler = (render_handler *)self;
 	rect->x = 0;
 	rect->y = 0;
-	rect->width = 1024;
-	rect->height = 768;
+	rect->width = handler->context->width;
+	rect->height = handler->context->height;
 
 	return 1;
 }

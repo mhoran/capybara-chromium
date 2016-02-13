@@ -47,6 +47,9 @@ run_reset_command(Command *self, Context *context)
 	host->close_browser(host, 1);
 	host->base.release((cef_base_t *)host);
 
+	context->width = 1680;
+	context->height = 1050;
+
 	ResetTask *task = calloc(1, sizeof(ResetTask));
 	task->context = context;
 	cef_task_t *t= (cef_task_t *)task;
