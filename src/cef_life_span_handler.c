@@ -31,7 +31,7 @@ int CEF_CALLBACK on_before_popup(struct _cef_life_span_handler_t* self,
     const struct _cef_popup_features_t* popupFeatures,
     struct _cef_window_info_t* windowInfo, struct _cef_client_t** client,
     struct _cef_browser_settings_t* settings, int* no_javascript_access) {
-    	return 0;
+	return 1;
 }
 
 ///
