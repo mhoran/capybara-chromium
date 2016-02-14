@@ -232,18 +232,24 @@ int CEF_CALLBACK on_process_message_received(
     } else if (strcmp(out.str, "InvocationError") == 0) {
 	    cef_list_value_t *arguments = message->get_argument_list(message);
 
-            cef_string_utf8_t name = {};
-            cef_string_utf8_set("InvalidResponseError", 20, &name, 0);
-
 	    cef_string_userfree_t value;
+	    value = arguments->get_string(arguments, 0);
+	    cef_string_userfree_utf8_t name = cef_string_userfree_utf8_alloc();
+	    cef_string_utf16_to_utf8(value->str, value->length, name);
+	    cef_string_userfree_free(value);
+	    if (strcmp(name->str, "Capybara.ClickFailed") == 0)
+		    cef_string_utf8_set("ClickFailed", 11, name, 0);
+	    else
+		    cef_string_utf8_set("InvalidResponseError", 20, name, 0);
+
 	    value = arguments->get_string(arguments, 1);
 	    cef_string_userfree_utf8_t msg = cef_string_userfree_utf8_alloc();
 	    cef_string_utf16_to_utf8(value->str, value->length, msg);
 	    cef_string_userfree_free(value);
 
 	    cef_string_userfree_utf8_t result = cef_string_userfree_utf8_alloc();
-	    char buf[25 + name.length + msg->length];
-	    sprintf(buf, "{\"class\":\"%s\",\"message\":\"%s\"}", name.str, msg->str);
+	    char buf[25 + name->length + msg->length];
+	    sprintf(buf, "{\"class\":\"%s\",\"message\":\"%s\"}", name->str, msg->str);
 	    cef_string_userfree_utf8_free(msg);
 	    cef_string_utf8_set(buf, sizeof(buf), result, 1);
 
