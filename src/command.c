@@ -183,3 +183,34 @@ initialize_resize_window_command(Command *command, char *arguments[])
 	command->arguments = arguments;
 	command->run = run_resize_window_command;
 }
+
+static
+void
+run_execute_command(Command *self, Context *context)
+{
+	fprintf(stderr, "Started Execute\n");
+
+	char *script = self->arguments[0];
+
+	cef_browser_host_t *host = context->browser->get_host(context->browser);
+	host->was_resized(host);
+	host->base.release((cef_base_t *)host);
+
+	cef_string_t code = {};
+	cef_string_utf8_to_utf16(script, strlen(script), &code);
+
+	cef_frame_t *frame = context->browser->get_main_frame(context->browser);
+	frame->execute_java_script(frame, &code, NULL, 0);
+	frame->base.release((cef_base_t *)frame);
+
+	cef_string_clear(&code);
+
+	context->finish(context, NULL);
+}
+
+void
+initialize_execute_command(Command *command, char *arguments[])
+{
+	command->arguments = arguments;
+	command->run = run_execute_command;
+}

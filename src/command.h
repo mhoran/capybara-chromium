@@ -13,3 +13,4 @@ void initialize_node_command(Command *command, char *arguments[], int argument_c
 void initialize_find_xpath_command(Command *command, char *arguments[]);
 void initialize_reset_command(Command *command, char *arguments[]);
 void initialize_resize_window_command(Command *command, char *arguments[]);
+void initialize_execute_command(Command *command, char *arguments[]);
