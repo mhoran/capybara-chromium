@@ -3,6 +3,7 @@
 
 #include "include/capi/cef_render_process_handler_capi.h"
 
+#include "capybara_invocation_handler.h"
 #include "cef_render_process_handler.h"
 #include "cef_base.h"
 
@@ -227,72 +228,6 @@ handle_invocation_exception(struct _cef_browser_t *browser, cef_v8value_t *windo
 	browser->send_process_message(browser, PID_BROWSER, cef_message);
 }
 
-static
-void
-execute_done_task(cef_task_t *self)
-{
-	BrowserMessageTask *task = (BrowserMessageTask *)self;
-	task->browser->send_process_message(task->browser, PID_BROWSER, task->message);
-	task->browser->base.release((cef_base_t *)task->browser);
-}
-
-static int CEF_CALLBACK
-execute(struct _cef_v8handler_t* self,
-    const cef_string_t* name, struct _cef_v8value_t* object,
-    size_t argumentsCount, struct _cef_v8value_t* const* arguments,
-    struct _cef_v8value_t** retval, cef_string_t* exception)
-{
-	int success;
-	cef_string_utf8_t out = {};
-	cef_string_utf16_to_utf8(name->str, name->length, &out);
-	if (strcmp(out.str, "clickTest") == 0) {
-		cef_v8value_t *result = cef_v8value_create_bool(1);
-		*retval = result;
-		success = 1;
-	} else if (strcmp(out.str, "leftClick") == 0) {
-		cef_v8context_t *context = cef_v8context_get_current_context();
-		cef_browser_t *browser = context->get_browser(context);
-
-		cef_string_t message_name = {};
-		cef_string_set(u"SendMouseClickEvent", 19, &message_name, 0);
-		cef_process_message_t *cef_message = cef_process_message_create(&message_name);
-
-		cef_list_value_t *args = cef_message->get_argument_list(cef_message);
-
-		int x = arguments[0]->get_int_value(arguments[0]);
-		args->set_int(args, 0, x);
-		int y = arguments[0]->get_int_value(arguments[1]);
-		args->set_int(args, 1, y);
-
-		browser->send_process_message(browser, PID_BROWSER, cef_message);
-		browser->base.release((cef_base_t *)browser);
-
-		success = 1;
-	} else if (strcmp(out.str, "done") == 0) {
-		cef_string_t name = {};
-		cef_string_set(u"RequestInvocationResult", 23, &name, 0);
-		cef_process_message_t *message = cef_process_message_create(&name);
-
-		cef_v8context_t *context = cef_v8context_get_current_context();
-		cef_browser_t *browser = context->get_browser(context);
-		browser->base.add_ref((cef_base_t *)browser);
-
-		BrowserMessageTask *t = calloc(1, sizeof(BrowserMessageTask));
-		t->browser = browser;
-		t->message = message;
-		((cef_task_t *)t)->base.size = sizeof(BrowserMessageTask);
-		((cef_task_t *)t)->execute = execute_done_task;
-		cef_post_task(TID_RENDERER, (cef_task_t *)t);
-
-		success = 1;
-	} else {
-		success = 0;
-	}
-	cef_string_utf8_clear(&out);
-
-	return success;
-}
-
 ///
 // Called when a new message is received from a different process. Return true
 // (1) if the message was handled or false (0) otherwise. Do not keep a
@@ -345,21 +280,26 @@ on_render_process_message_received(
 		cef_string_set(u"arguments", 9, &key, 0);
 		invocation->set_value_bykey(invocation, &key, invocation_arguments, V8_PROPERTY_ATTRIBUTE_NONE);
 
-		cef_v8handler_t *handler = calloc(1, sizeof(cef_v8handler_t));
-		handler->base.size = sizeof(cef_v8handler_t);
-		handler->execute = execute;
+		capybara_invocation_handler *h = calloc(1, sizeof(capybara_invocation_handler));
+		initialize_capybara_invocation_handler(h);
+		cef_v8handler_t *handler = (cef_v8handler_t *)h;
+
+		handler->base.add_ref((cef_base_t *)handler);
 		cef_string_set(u"hover", 5, &key, 0);
 		cef_v8value_t *fn = cef_v8value_create_function(&key, handler);
 		invocation->set_value_bykey(invocation, &key, fn, V8_PROPERTY_ATTRIBUTE_NONE);
 
+		handler->base.add_ref((cef_base_t *)handler);
 		cef_string_set(u"clickTest", 9, &key, 0);
 		fn = cef_v8value_create_function(&key, handler);
 		invocation->set_value_bykey(invocation, &key, fn, V8_PROPERTY_ATTRIBUTE_NONE);
 
+		handler->base.add_ref((cef_base_t *)handler);
 		cef_string_set(u"leftClick", 9, &key, 0);
 		fn = cef_v8value_create_function(&key, handler);
 		invocation->set_value_bykey(invocation, &key, fn, V8_PROPERTY_ATTRIBUTE_NONE);
 
+		handler->base.add_ref((cef_base_t *)handler);
 		cef_string_set(u"done", 4, &key, 0);
 		fn = cef_v8value_create_function(&key, handler);
 		invocation->set_value_bykey(invocation, &key, fn, V8_PROPERTY_ATTRIBUTE_NONE);

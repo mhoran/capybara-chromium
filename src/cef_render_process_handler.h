@@ -9,12 +9,6 @@ typedef struct _render_process_handler {
 	atomic_int ref_count;
 } render_process_handler;
 
-typedef struct {
-	cef_task_t task;
-	cef_browser_t *browser;
-	cef_process_message_t *message;
-} BrowserMessageTask;
-
 void
 CEF_CALLBACK
 on_render_thread_created(
