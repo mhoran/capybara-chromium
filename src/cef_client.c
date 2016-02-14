@@ -237,8 +237,11 @@ int CEF_CALLBACK on_process_message_received(
 	    cef_string_userfree_utf8_t name = cef_string_userfree_utf8_alloc();
 	    cef_string_utf16_to_utf8(value->str, value->length, name);
 	    cef_string_userfree_free(value);
+
 	    if (strcmp(name->str, "Capybara.ClickFailed") == 0)
 		    cef_string_utf8_set("ClickFailed", 11, name, 0);
+	    else if (strcmp(name->str, "Capybara.NodeNotAttachedError") == 0)
+		    cef_string_utf8_set("NodeNotAttachedError", 20, name, 0);
 	    else
 		    cef_string_utf8_set("InvalidResponseError", 20, name, 0);
 
