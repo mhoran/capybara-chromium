@@ -1843,46 +1843,6 @@ describe Capybara::Webkit::Driver do
     let(:connection) { Capybara::Webkit::Connection.new }
   end
 
-  context "custom font app" do
-    let(:driver) do
-      driver_for_html(<<-HTML)
-        <html>
-          <head>
-            <style type="text/css">
-              p { font-family: "Verdana"; }
-              p:before { font-family: "Verdana"; }
-              p:after { font-family: "Verdana"; }
-            </style>
-          </head>
-          <body>
-            <p id="text">Hello</p>
-          </body>
-        </html>
-      HTML
-    end
-
-    before { visit("/") }
-
-    let(:font_family) do
-      driver.evaluate_script(<<-SCRIPT)
-        var element = document.getElementById("text");
-        element.ownerDocument.defaultView.getComputedStyle(element, null).getPropertyValue("font-family");
-      SCRIPT
-    end
-
-    it "ignores custom fonts" do
-      font_family.should eq "Arial"
-    end
-
-    it "ignores custom fonts before an element" do
-      font_family.should eq "Arial"
-    end
-
-    it "ignores custom fonts after an element" do
-      font_family.should eq "Arial"
-    end
-  end
-
   context "cookie-based app" do
     let(:driver) do
       driver_for_app do
