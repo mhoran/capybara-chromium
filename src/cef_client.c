@@ -3,6 +3,7 @@
 // Website: https://github.com/CzarekTomczak/cefcapi
 
 #include <string.h>
+#include <ctype.h>
 
 #include "cef_life_span_handler.h"
 #include "cef_render_handler.h"
@@ -277,6 +278,75 @@ int CEF_CALLBACK on_process_message_received(
 	    cef_process_message_t *message = cef_process_message_create(&name);
 
 	    browser->send_process_message(browser, PID_RENDERER, message);
+
+	    success = 1;
+    } else if (strcmp(out.str, "SendKeyEvent") == 0) {
+	    cef_list_value_t *arguments = message->get_argument_list(message);
+
+	    int c = arguments->get_int(arguments, 0);
+
+	    cef_key_event_t event = {};
+	    event.type = KEYEVENT_KEYDOWN;
+
+	    int key_code = toupper(c);
+
+	    switch (key_code) {
+	    case '`': key_code = 192; break;
+	    case '-': key_code = 189; break;
+	    case '=': key_code = 187; break;
+	    case '[': key_code = 219; break;
+	    case ']': key_code = 221; break;
+	    case '\\': key_code = 220; break;
+	    case ';': key_code = 186; break;
+	    case '\'': key_code = 222; break;
+	    case ',': key_code = 188; break;
+	    case '.': key_code = 190; break;
+	    case '/': key_code = 191; break;
+	    case 127: key_code = 46; break;  //delete
+	    case '~': key_code = 192; break;
+	    case '!': key_code = 49; break;
+	    case '@': key_code = 50; break;
+	    case '#': key_code = 51; break;
+	    case '$': key_code = 52; break;
+	    case '%': key_code = 53; break;
+	    case '^': key_code = 54; break;
+	    case '&': key_code = 55; break;
+	    case '*': key_code = 56; break;
+	    case '(': key_code = 57; break;
+	    case ')': key_code = 48; break;
+	    case '_': key_code = 189; break;
+	    case '+': key_code = 187; break;
+	    case '{': key_code = 219; break;
+	    case '}': key_code = 221; break;
+	    case '|': key_code = 220; break;
+	    case ':': key_code = 186; break;
+	    case '"': key_code = 222; break;
+	    case '<': key_code = 188; break;
+	    case '>': key_code = 190; break;
+	    case '?': key_code = 191; break;
+	    case '\b':
+	    case '\t':
+	    case '\n':
+	    case '\e':
+	    case ' ': break;
+	    default:
+		     if (key_code < '0' || key_code > 'Z')
+			     key_code = 0;
+	    }
+
+	    event.windows_key_code = event.native_key_code = key_code;
+	    event.character = c;
+
+	    cef_browser_host_t *host = browser->get_host(browser);
+	    host->send_key_event(host, &event);
+
+	    event.type = KEYEVENT_CHAR;
+	    host->send_key_event(host, &event);
+
+	    event.type = KEYEVENT_KEYUP;
+	    host->send_key_event(host, &event);
+
+	    host->base.release((cef_base_t *)host);
 
 	    success = 1;
     } else {

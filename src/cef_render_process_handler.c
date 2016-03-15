@@ -304,6 +304,11 @@ on_render_process_message_received(
 		fn = cef_v8value_create_function(&key, handler);
 		invocation->set_value_bykey(invocation, &key, fn, V8_PROPERTY_ATTRIBUTE_NONE);
 
+		handler->base.add_ref((cef_base_t *)handler);
+		cef_string_set(u"keypress", 8, &key, 0);
+		fn = cef_v8value_create_function(&key, handler);
+		invocation->set_value_bykey(invocation, &key, fn, V8_PROPERTY_ATTRIBUTE_NONE);
+
 		cef_v8value_t *object = context->get_global(context);
 
 		cef_string_set(u"CapybaraInvocation", 18, &key, 0);

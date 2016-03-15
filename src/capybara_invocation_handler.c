@@ -65,6 +65,23 @@ execute(struct _cef_v8handler_t* self,
 		cef_post_task(TID_RENDERER, (cef_task_t *)t);
 
 		success = 1;
+	} else if (strcmp(out.str, "keypress") == 0) {
+		cef_v8context_t *context = cef_v8context_get_current_context();
+		cef_browser_t *browser = context->get_browser(context);
+
+		cef_string_t message_name = {};
+		cef_string_set(u"SendKeyEvent", 12, &message_name, 0);
+		cef_process_message_t *cef_message = cef_process_message_create(&message_name);
+
+		cef_list_value_t *args = cef_message->get_argument_list(cef_message);
+
+		int c = arguments[0]->get_int_value(arguments[0]);
+		args->set_int(args, 0, c);
+
+		browser->send_process_message(browser, PID_BROWSER, cef_message);
+		browser->base.release((cef_base_t *)browser);
+
+		success = 1;
 	} else {
 		success = 0;
 	}

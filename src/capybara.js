@@ -314,7 +314,7 @@ Capybara = {
         node.value = "";
 
         for (strindex = 0; strindex < length; strindex++) {
-          CapybaraInvocation.keypress(value[strindex]);
+          CapybaraInvocation.keypress(value.charCodeAt(strindex));
         }
 
         if (value == '')
