@@ -205,11 +205,18 @@ int main(int argc, char** argv) {
     cef_request_context_t *request_context =
 	cef_request_context_create_context(&request_context_settings, NULL);
 
+    cef_string_t url = {};
+    cef_string_set(u"about:blank", 11, &url, 0);
+
     client->base.add_ref((cef_base_t *)client);
     cef_browser_t *browser = cef_browser_host_create_browser_sync(&windowInfo,
-	client, NULL, &browserSettings, request_context);
+	client, &url, &browserSettings, request_context);
     browser->base.add_ref((cef_base_t *)browser);
     context.browser = browser;
+
+    cef_browser_host_t *host = browser->get_host(browser);
+    host->send_focus_event(host, 1);
+    host->base.release((cef_base_t *)host);
 
     printf("Ready\n");
     fflush(stdout);

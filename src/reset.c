@@ -37,6 +37,10 @@ execute_reset(cef_task_t *self)
 	browser->base.add_ref((cef_base_t *) browser);
 	task->context->browser = browser;
 
+	cef_browser_host_t *host = browser->get_host(browser);
+	host->send_focus_event(host, 1);
+	host->base.release((cef_base_t *)host);
+
 	task->context->finish(task->context, NULL);
 }
 
